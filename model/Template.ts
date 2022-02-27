@@ -3,10 +3,9 @@ import { ContentPart } from "./ContentPart.ts";
 import { HtmlContentPart, html } from "./HtmlContentPart.ts";
 import { JsContentPart, js } from "./JsContentPart.ts";
 import { Cache } from "./Cache.ts";
-import { Marked as Markdown } from "https://deno.land/x/markdown/mod.ts";
+import { Marked as Markdown } from "https://deno.land/x/markdown@v2.0.0/mod.ts";
 
 
-// deno-lint-ignore no-explicit-any
 export type ParamsType<ValueType> = Record<string, ValueType>;
 
 
@@ -57,10 +56,12 @@ export class Template {
             return this._createContentPartByContext(ctx, s);
         });
 
+        // deno-lint-ignore no-explicit-any
         this._addNormalizedFilter('json', (_ctx: RenderingContext, s: any) => {
             return this._createContentPartByContext(RenderingContext.JS, JSON.stringify(s));
         });
 
+        // deno-lint-ignore no-explicit-any
         this._addNormalizedFilter('markdown', (_ctx: RenderingContext, s: any) => {
             return this._createContentPartByContext(RenderingContext.HTML, Markdown.parse(s).content);
         });
