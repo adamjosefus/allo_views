@@ -1,12 +1,12 @@
 export abstract class ContentFragment {
-    #parts: string[];
-    #values: unknown[];
+    protected parts: string[];
+    protected values: unknown[];
 
 
     // deno-lint-ignore no-explicit-any
     constructor(parts: string[] | string, values: any[] = []) {
-        this.#parts = typeof parts == 'string' ? [parts] : parts;
-        this.#values = values;
+        this.parts = typeof parts == 'string' ? [parts] : parts;
+        this.values = values;
     }
 
 

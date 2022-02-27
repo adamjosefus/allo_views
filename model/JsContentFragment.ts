@@ -11,12 +11,12 @@ export class JsContentFragment extends ContentFragment {
     toString(): string {
         const acc: string[] = [];
 
-        for (let i = 0; i < this.#parts.length; i++) {
-            const base = this.#parts[i];
+        for (let i = 0; i < this.parts.length; i++) {
+            const base = this.parts[i];
             acc.push(base);
 
-            if (this.#values[i] !== undefined) {
-                const value = this.#values[i];
+            if (this.values[i] !== undefined) {
+                const value = this.values[i];
 
                 if (value instanceof JsContentFragment) {
                     acc.push(value.toString());
