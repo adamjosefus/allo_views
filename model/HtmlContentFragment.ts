@@ -1,5 +1,6 @@
 import { ContentFragment } from "./ContentFragment.ts";
 
+
 export class HtmlContentFragment extends ContentFragment {
 
     #regex = {
@@ -30,12 +31,12 @@ export class HtmlContentFragment extends ContentFragment {
     toString(): string {
         const acc: string[] = [];
 
-        for (let i = 0; i < this._bases.length; i++) {
-            const base = this._bases[i];
+        for (let i = 0; i < this.#parts.length; i++) {
+            const base = this.#parts[i];
             acc.push(base);
 
-            if (this._values[i] !== undefined) {
-                const value = this._values[i];
+            if (this.#values[i] !== undefined) {
+                const value = this.#values[i];
 
                 if (value instanceof HtmlContentFragment) {
                     acc.push(value.toString());
