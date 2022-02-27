@@ -1,5 +1,6 @@
 import { ContentFragment } from "./ContentFragment.ts";
 
+
 export class JsContentFragment extends ContentFragment {
     
     escape(s: any): string {
@@ -10,12 +11,12 @@ export class JsContentFragment extends ContentFragment {
     toString(): string {
         const acc: string[] = [];
 
-        for (let i = 0; i < this._bases.length; i++) {
-            const base = this._bases[i];
+        for (let i = 0; i < this.#parts.length; i++) {
+            const base = this.#parts[i];
             acc.push(base);
 
-            if (this._values[i] !== undefined) {
-                const value = this._values[i];
+            if (this.#values[i] !== undefined) {
+                const value = this.#values[i];
 
                 if (value instanceof JsContentFragment) {
                     acc.push(value.toString());
