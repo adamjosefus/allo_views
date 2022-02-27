@@ -1,6 +1,6 @@
-import { ContentPart } from "./ContentPart.ts";
+import { ContentFragment } from "./ContentFragment.ts";
 
-export class JsContentPart extends ContentPart {
+export class JsContentFragment extends ContentFragment {
     
     escape(s: any): string {
         return JSON.stringify(s);
@@ -17,7 +17,7 @@ export class JsContentPart extends ContentPart {
             if (this._values[i] !== undefined) {
                 const value = this._values[i];
 
-                if (value instanceof JsContentPart) {
+                if (value instanceof JsContentFragment) {
                     acc.push(value.toString());
                 } else {
                     acc.push(this.escape(value));
@@ -31,5 +31,5 @@ export class JsContentPart extends ContentPart {
 
 
 export function js(contents: TemplateStringsArray, ...expressions: any[]) {
-    return new JsContentPart([...contents], expressions);
+    return new JsContentFragment([...contents], expressions);
 }
