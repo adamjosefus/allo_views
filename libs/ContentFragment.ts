@@ -22,7 +22,7 @@ export abstract class ContentFragment {
 }
 
 
-export type contextTagType = {
+export type ContextTagType = {
     // deno-lint-ignore no-explicit-any
     (contents: TemplateStringsArray, ...expressions: any[]): ContentFragment
 }
