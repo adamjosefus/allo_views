@@ -1,3 +1,7 @@
+/**
+ * @copyright Copyright (c) 2022 Adam Josefus
+ */
+
 import { Marked as Markdown } from "https://deno.land/x/markdown@v2.0.0/mod.ts";
 import { type ContentFragment } from "./ContentFragment.ts";
 import { Context } from "./Context.ts";

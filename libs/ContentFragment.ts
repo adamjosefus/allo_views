@@ -1,3 +1,7 @@
+/**
+ * @copyright Copyright (c) 2022 Adam Josefus
+ */
+
 export abstract class ContentFragment {
     protected parts: string[];
     protected values: unknown[];

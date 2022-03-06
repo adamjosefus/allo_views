@@ -1,3 +1,7 @@
+/**
+ * @copyright Copyright (c) 2022 Adam Josefus
+ */
+
 import { TemplateError } from "./TemplateError.ts";
 import { ContentPart } from "./ContentPart.ts";
 import { HtmlContentPart, html } from "./HtmlContentPart.ts";

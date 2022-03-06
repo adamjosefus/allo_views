@@ -1,3 +1,7 @@
+/**
+ * @copyright Copyright (c) 2022 Adam Josefus
+ */
+
 import { ContentFragment } from "./ContentFragment.ts";
 
 
