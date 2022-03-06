@@ -55,6 +55,6 @@ export class HtmlContentFragment extends ContentFragment {
 }
 
 
-export function html(contents: TemplateStringsArray, ...expressions: any[]) {
+export function html(contents: TemplateStringsArray, ...expressions: unknown[]) {
     return new HtmlContentFragment([...contents], expressions);
 }

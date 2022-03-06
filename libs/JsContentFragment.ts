@@ -7,7 +7,7 @@ import { ContentFragment } from "./ContentFragment.ts";
 
 export class JsContentFragment extends ContentFragment {
     
-    escape(s: any): string {
+    escape(s: unknown): string {
         return JSON.stringify(s);
     }
 
@@ -35,6 +35,6 @@ export class JsContentFragment extends ContentFragment {
 }
 
 
-export function js(contents: TemplateStringsArray, ...expressions: any[]) {
+export function js(contents: TemplateStringsArray, ...expressions: unknown[]) {
     return new JsContentFragment([...contents], expressions);
 }
