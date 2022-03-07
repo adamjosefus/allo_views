@@ -60,7 +60,6 @@ export class TemplateParser {
             return slices;
         }
 
-
         const jsSlices = computeJsSlices(source);
         const htmlSlices = computeHtmlSlices(source, [0, ...jsSlices.map(s => [s.start, s.end]).flat()]);
 
