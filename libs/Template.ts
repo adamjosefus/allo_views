@@ -2,14 +2,13 @@
  * @copyright Copyright (c) 2022 Adam Josefus
  */
 
+import { join, isAbsolute } from "https://deno.land/std@0.128.0/path/mod.ts";
 import { Cache } from "https://deno.land/x/allo_caching@v1.2.0/mod.ts";
 import { TemplateError } from "./TemplateError.ts";
+import { ContextOptions, html, js } from "./contexts/mod.ts";
+import { FragmentsParser } from "./FragmentsParser.ts";
+import { TemplateFragment } from "./fragments/mod.ts";
 import * as Filters from "./filters.ts";
-import {
-    ContextOptions,
-    html,
-    js,
-} from "./contexts/mod.ts";
 
 
 export type ParamsType<ValueType> = Record<string, ValueType>;
@@ -25,26 +24,12 @@ type FilterNormalizedCallbackType = {
     (context: ContextOptions, ...args: any[]): any;
 }
 
-type FilterListType = {
-    name: string,
-    callback: FilterNormalizedCallbackType,
-}[];
-
-
-type ContentPartsType = {
-    htmlParts: string[],
-    scriptParts: string[],
-};
 
 
 export class Template {
-
-    readonly #scriptElementParser = /(?<openTag>\<script.*?\>)(?<content>.*?)(?<closeTag><\/script>)/gs;
-    readonly #javascriptCommentParser = /(\/\*[\w\'\s\r\n\*]*\*\/)|(\/\/[\w\s\']*)|(\<![\-\-\s\w\>\/]*\>)/g;
-    readonly #paramsParser = /(?<quote>"|'|)\{\$(?<name>[a-z_]+[A-z0-9_]*)(\((?<args>.*)\)){0,1}(?<filters>(\|[a-z_]+)*)\}\1/gi;
-
-    #filters: FilterListType = [];
-    #cache = new Cache<ContentPartsType>();
+    readonly #filters: Map<string, FilterNormalizedCallbackType> = new Map();
+    readonly #fragmentsCache = new Cache<TemplateFragment[]>();
+    readonly #fragmentsParser = new FragmentsParser();
 
 
     constructor() {
@@ -67,170 +52,45 @@ export class Template {
     #addNormalizedFilter(name: string, callback: FilterNormalizedCallbackType): void {
         if (this.#hasFilter(name)) throw new TemplateError(`Filter "${name}" is already exists.`);
 
-        this.#filters.push({ name, callback });
+        this.#filters.set(name, callback)
     }
 
 
     #hasFilter(name: string): boolean {
-        return this.#findFilterItem(name) ? true : false;
+        return this.#filters.has(name);
     }
 
 
     #getFilter(name: string): FilterNormalizedCallbackType {
         if (this.#hasFilter(name)) {
-            return this.#findFilterItem(name)!.callback
+            return this.#filters.get(name)!;
         } else throw new TemplateError(`Filter not found by name "${name}".`);
     }
 
 
-    #findFilterItem(name: string) {
-        return this.#filters.find(f => f.name == name);
-    }
-
-
     render(templatePath: string, templateParams: ParamsType<unknown> = {}): string {
-        const { htmlParts, scriptParts } = this.#getContent(templatePath);
+        const fragments = this.#getFragments(templatePath);
 
-        return this.#render(htmlParts, scriptParts, templateParams);
+        return this.#renderFragments(fragments, templateParams);
     }
 
 
-    #render(htmlContents: string[], scriptContents: string[], templateParams: ParamsType<unknown>) {
-        const buffer: string[] = [];
-
-        for (let i = 0; i < Math.max(htmlContents.length, scriptContents.length); i++) {
-            const html = htmlContents[i];
-            if (html) buffer.push(this.#processRenderString(ContextOptions.HtmlContent, html, templateParams));
-
-            const js = scriptContents[i];
-            if (js) buffer.push(this.#processRenderString(ContextOptions.JsContent, js, templateParams));
-        }
-
-        return buffer.join('');
+    #renderFragments(fragments: TemplateFragment[], params: ParamsType<unknown>): string {
+        return fragments.map(fragment => fragment.render(params)).join('');
     }
 
 
-    #getContent(templatePath: string): ContentPartsType {
-        return this.#cache.load(templatePath, () => this.#createContent(templatePath), {
-            files: [templatePath]
+    #getFragments(path: string): TemplateFragment[] {
+        return this.#fragmentsCache.load(path, () => this.#createFragments(path), {
+            files: [path]
         });
     }
 
 
-    #createContent(templatePath: string): ContentPartsType {
-        const source = Deno.readTextFileSync(templatePath);
+    #createFragments(path: string): TemplateFragment[] {
+        const absolutePath = isAbsolute(path) ? path : join(Deno.cwd(), path);
+        const source = Deno.readTextFileSync(absolutePath);
 
-        const [sliceIndexes, scriptParts] = (() => {
-            const slices: number[] = [];
-            const contents: string[] = [];
-
-            let result: RegExpExecArray | null = null
-
-            this.#scriptElementParser.lastIndex = 0;
-            while ((result = this.#scriptElementParser.exec(source)) !== null) {
-                const { openTag, content, closeTag } = result.groups as Record<string, string>;
-                const offset = this.#scriptElementParser.lastIndex - (openTag.length + content.length + closeTag.length);
-
-                const sliceStartsAt = offset + openTag.length;
-                const sliceEndsAt = sliceStartsAt + content.length;
-
-                slices.push(sliceStartsAt, sliceEndsAt);
-                contents.push(content);
-            }
-
-            return [slices, contents] as [number[], string[]];
-        })()
-
-        const htmlParts = ((s, slices) => {
-            const buffer: string[] = [];
-
-            for (let i = 0; i < slices.length; i += 2) {
-                const start = slices[i];
-                const end = slices[i + 1];
-
-                buffer.push(s.substring(start, end));
-            }
-
-            return buffer;
-        })(source, [0, ...sliceIndexes])
-
-        return {
-            htmlParts,
-            scriptParts
-        }
-    }
-
-
-    #processRenderString(context: ContextOptions, s: string, templateParams: ParamsType<unknown> = {}) {
-        this.#paramsParser.lastIndex = 0;
-        // deno-lint-ignore no-explicit-any
-        const final = s.replace(this.#paramsParser, (_match: string, ...exec: any[]) => {
-            const [_g1, _g2, _g3, _g4, _g5, _g6, _pos, _content, groups] = exec;
-            const paramName = groups.name as string;
-            const quote = (s => s.length > 0 ? s : null)(groups.quote as string);
-
-            const paramFilters: string[] = ((s) => {
-                return s
-                    .split('|')
-                    .map(v => v.trim())
-                    .filter(v => v !== '')
-                    .filter((v, i, arr) => arr.indexOf(v) == i);
-            })(groups.filters as string);
-
-            const paramInput = templateParams[paramName];
-
-            // Args
-            // deno-lint-ignore no-explicit-any
-            const paramArgs: any[] | null = ((s: string | undefined) => {
-                if (s !== undefined) return JSON.parse(`[${s}]`);
-                else return null;
-            })(groups.args)
-
-
-            // Value
-            const value = (() => {
-                if (paramInput !== undefined) {
-                    if (paramArgs !== null) {
-                        if (typeof paramInput === 'function') return paramInput(...paramArgs);
-                        else throw new TemplateError(`Param "${paramName}" is not a function.`);
-                    } else return paramInput;
-                } else throw new TemplateError(`Param "${paramName}" has no value.`);
-            })()
-
-            // Filters
-            const filters = ((names) => {
-                const arr = names.reduce((acc: FilterNormalizedCallbackType[], n) => {
-                    acc.push(this.#getFilter(n));
-
-                    return acc;
-                }, []);
-
-                return arr;
-            })(paramFilters)
-
-
-            const raw = ((v, filters) => {
-                return filters.reduce((v, f) => f(context, v), v);
-            })(value, filters);
-
-
-            // Final value
-            const contentPart = ((s) => {
-                switch (context) {
-                    case ContextOptions.HtmlContent:
-                        if (quote !== null) return html`"${s}"`;
-                        else return html`${s}`;
-
-                    case ContextOptions.JsContent:
-                        return js`${s}`;
-
-                    default: throw new TemplateError(`Unknown renderning context "${context}"`);
-                }
-            })(raw);
-
-            return contentPart.toString();
-        });
-
-        return final;
+        return this.#fragmentsParser.parse(source);
     }
 }
