@@ -69,7 +69,7 @@ export class TemplateParser {
 
             return [
                 fragments,
-                this.#createHtmlFragments(htmlSlice.content),
+                htmlSlice ? this.#createHtmlFragments(htmlSlice.content) : [],
                 jsSlice ? this.#createJsFragments(jsSlice.content) : [],
             ].flat();
         }, []);
@@ -87,7 +87,7 @@ export class TemplateParser {
 
         type PrefragmentType = {
             comment: boolean,
-            content: string,
+            base: string,
         }
 
         const prefragments: PrefragmentType[] = [];
@@ -97,6 +97,7 @@ export class TemplateParser {
             end: 0,
         }
 
+        // Detect comments
         let match: RegExpExecArray | null = null
         while ((match = regex.exec(source)) !== null) {
             const start = match.index;
@@ -104,7 +105,7 @@ export class TemplateParser {
 
             prefragments.push({
                 comment: false,
-                content: source.substring(previous.end, start)
+                base: source.substring(previous.end, start)
             });
 
             previous.start = start;
@@ -114,32 +115,29 @@ export class TemplateParser {
 
             prefragments.push({
                 comment: isComment,
-                content: source.substring(start, end)
+                base: source.substring(start, end)
             });
         }
 
         prefragments.push({
             comment: false,
-            content: source.substring(previous.end)
+            base: source.substring(previous.end)
         });
-
 
         const fragments: TemplateFragment[] = prefragments
             // Join item with same type
             .reduce((acc: PrefragmentType[], curr) => {
                 const prev = acc.at(-1)
 
-                if (prev && prev.comment === curr.comment) {
-                    prev.content += curr.content
-                } else {
-                    acc.push(curr);
-                }
+                if (prev && prev.comment === curr.comment) prev.base += curr.base
+                else acc.push(curr);
 
                 return acc;
             }, [])
+            // Create fragments
             .map(pre => {
-                if (pre.comment) return new JsCommentFragment(pre.content);
-                else return new JsContentFragment(pre.content);
+                if (pre.comment) return new JsCommentFragment(pre.base);
+                else return new JsContentFragment(pre.base);
             });
 
         return fragments;
