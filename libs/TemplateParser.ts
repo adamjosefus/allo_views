@@ -5,7 +5,7 @@
 import {
     type TemplateFragment,
     HtmlContentFragment,
-    HtmlCommentFragment,
+    // HtmlCommentFragment,
     JsContentFragment,
     JsCommentFragment,
 } from "./fragments/mod.ts";
@@ -75,8 +75,8 @@ export class TemplateParser {
     }
 
 
-    #createHtmlFragments(source: string): (HtmlContentFragment | HtmlCommentFragment)[] {
-        throw new Error("Method not implemented.");
+    #createHtmlFragments(source: string): HtmlContentFragment[] {
+        return [new HtmlContentFragment(source)];
     }
 
 
