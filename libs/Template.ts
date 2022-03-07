@@ -3,8 +3,6 @@
  */
 
 import { Cache } from "https://deno.land/x/allo_caching@v1.2.0/mod.ts";
-import { Marked as Markdown } from "https://deno.land/x/markdown@v2.0.0/mod.ts";
-
 import { TemplateError } from "./TemplateError.ts";
 import { Context } from "./Context.ts";
 import { Fragment, createFragment, HtmlContentFragment, html, JsContentFragment, js } from "./fragments/mod.ts";
@@ -39,6 +37,7 @@ type ContentPartsType = {
 export class Template {
 
     readonly #scriptElementParser = /(?<openTag>\<script.*?\>)(?<content>.*?)(?<closeTag><\/script>)/gs;
+    readonly #javascriptCommentParser = /(\/\*[\w\'\s\r\n\*]*\*\/)|(\/\/[\w\s\']*)|(\<![\-\-\s\w\>\/]*\>)/g;
     readonly #paramsParser = /(?<quote>"|'|)\{\$(?<name>[a-z_]+[A-z0-9_]*)(\((?<args>.*)\)){0,1}(?<filters>(\|[a-z_]+)*)\}\1/gi;
 
     #filters: FilterListType = [];
