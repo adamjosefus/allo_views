@@ -21,7 +21,7 @@ type SliceType = {
 export class TemplateParser {
 
     readonly #scriptTagParser = /(?<openTag>\<script.*?\>)(?<content>.*?)(?<closeTag><\/script>)/gs;
-    readonly #jsCommentParser = /(\/\*[\w\'\s\r\n\*]*\*\/)|(\/\/[\w\s\']*)|(\<![\-\-\s\w\>\/]*\>)/g;
+    readonly #jsCommentParser = /(?:((["'`])(?:(?:\\\\)|\\\2|(?!\\\2)\\|(?!\2).|[\n\r])*\2)|(\/\*(?:(?!\*\/).|[\n\r])*\*\/)|(\/\/[^\n\r]*(?:[\n\r]+|$))|((?:=|:)\s*(?:\/(?:(?:(?!\\*\/).)|\\\\|\\\/|[^\\]\[(?:\\\\|\\\]|[^]])+\])+\/))|((?:\/(?:(?:(?!\\*\/).)|\\\\|\\\/|[^\\]\[(?:\\\\|\\\]|[^]])+\])+\/)[gimy]?\.(?:exec|test|match|search|replace|split)\()|(\.(?:exec|test|match|search|replace|split)\((?:\/(?:(?:(?!\\*\/).)|\\\\|\\\/|[^\\]\[(?:\\\\|\\\]|[^]])+\])+\/))|(<!--(?:(?!-->).)*-->))/g;
 
 
     parse(source: string): readonly TemplateFragment[] {
@@ -69,19 +69,79 @@ export class TemplateParser {
 
             return [
                 fragments,
-                this.#createHtmlFragments(htmlSlice),
-                jsSlice ? this.#createJsFragments(jsSlice) : [],
+                this.#createHtmlFragments(htmlSlice.content),
+                jsSlice ? this.#createJsFragments(jsSlice.content) : [],
             ].flat();
         }, []);
     }
 
 
-    #createHtmlFragments(_slice: SliceType): (HtmlContentFragment | HtmlCommentFragment)[] {
+    #createHtmlFragments(source: string): (HtmlContentFragment | HtmlCommentFragment)[] {
         throw new Error("Method not implemented.");
     }
 
 
-    #createJsFragments(_slice: SliceType): (JsContentFragment | JsCommentFragment)[] {
-        throw new Error("Method not implemented.");
+    #createJsFragments(source: string): (JsContentFragment | JsCommentFragment)[] {
+        const regex = this.#jsCommentParser;
+        regex.lastIndex = 0;
+
+        type PrefragmentType = {
+            comment: boolean,
+            content: string,
+        }
+
+        const prefragments: PrefragmentType[] = [];
+
+        const previous = {
+            start: 0,
+            end: 0,
+        }
+
+        let match: RegExpExecArray | null = null
+        while ((match = regex.exec(source)) !== null) {
+            const start = match.index;
+            const end = regex.lastIndex;
+
+            prefragments.push({
+                comment: false,
+                content: source.substring(previous.end, start)
+            });
+
+            previous.start = start;
+            previous.end = end;
+
+            const isComment = match[2] === undefined;
+
+            prefragments.push({
+                comment: isComment,
+                content: source.substring(start, end)
+            });
+        }
+
+        prefragments.push({
+            comment: false,
+            content: source.substring(previous.end)
+        });
+
+
+        const fragments: TemplateFragment[] = prefragments
+            // Join item with same type
+            .reduce((acc: PrefragmentType[], curr) => {
+                const prev = acc.at(-1)
+
+                if (prev && prev.comment === curr.comment) {
+                    prev.content += curr.content
+                } else {
+                    acc.push(curr);
+                }
+
+                return acc;
+            }, [])
+            .map(pre => {
+                if (pre.comment) return new JsCommentFragment(pre.content);
+                else return new JsContentFragment(pre.content);
+            });
+
+        return fragments;
     }
 }
