@@ -4,9 +4,12 @@
 
 import { Cache } from "https://deno.land/x/allo_caching@v1.2.0/mod.ts";
 import { TemplateError } from "./TemplateError.ts";
-import { Context } from "./Context.ts";
-import { Fragment, createFragment, HtmlContentFragment, html, JsContentFragment, js } from "./fragments/mod.ts";
 import * as Filters from "./filters.ts";
+import {
+    ContextOptions,
+    html,
+    js,
+} from "./contexts/mod.ts";
 
 
 export type ParamsType<ValueType> = Record<string, ValueType>;
@@ -19,7 +22,7 @@ export type FilterCallbackType = {
 
 type FilterNormalizedCallbackType = {
     // deno-lint-ignore no-explicit-any
-    (context: Context, ...args: any[]): any;
+    (context: ContextOptions, ...args: any[]): any;
 }
 
 type FilterListType = {
@@ -97,10 +100,10 @@ export class Template {
 
         for (let i = 0; i < Math.max(htmlContents.length, scriptContents.length); i++) {
             const html = htmlContents[i];
-            if (html) buffer.push(this.#processRenderString(Context.HtmlContent, html, templateParams));
+            if (html) buffer.push(this.#processRenderString(ContextOptions.HtmlContent, html, templateParams));
 
             const js = scriptContents[i];
-            if (js) buffer.push(this.#processRenderString(Context.JsContent, js, templateParams));
+            if (js) buffer.push(this.#processRenderString(ContextOptions.JsContent, js, templateParams));
         }
 
         return buffer.join('');
@@ -158,7 +161,7 @@ export class Template {
     }
 
 
-    #processRenderString(context: Context, s: string, templateParams: ParamsType<unknown> = {}) {
+    #processRenderString(context: ContextOptions, s: string, templateParams: ParamsType<unknown> = {}) {
         this.#paramsParser.lastIndex = 0;
         // deno-lint-ignore no-explicit-any
         const final = s.replace(this.#paramsParser, (_match: string, ...exec: any[]) => {
@@ -214,11 +217,11 @@ export class Template {
             // Final value
             const contentPart = ((s) => {
                 switch (context) {
-                    case Context.HtmlContent:
+                    case ContextOptions.HtmlContent:
                         if (quote !== null) return html`"${s}"`;
                         else return html`${s}`;
 
-                    case Context.JsContent:
+                    case ContextOptions.JsContent:
                         return js`${s}`;
 
                     default: throw new TemplateError(`Unknown renderning context "${context}"`);

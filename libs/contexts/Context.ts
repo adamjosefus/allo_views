@@ -2,7 +2,7 @@
  * @copyright Copyright (c) 2022 Adam Josefus
  */
 
-export abstract class Fragment {
+export abstract class Context {
     protected parts: string[];
     protected values: unknown[];
 
@@ -22,7 +22,7 @@ export abstract class Fragment {
 }
 
 
-export type ContextTagType = {
+export type ContextTag = {
     // deno-lint-ignore no-explicit-any
-    (contents: TemplateStringsArray, ...expressions: any[]): Fragment
+    (contents: TemplateStringsArray, ...expressions: any[]): Context
 }

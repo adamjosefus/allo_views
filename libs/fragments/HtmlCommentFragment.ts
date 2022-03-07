@@ -5,5 +5,5 @@
 import { TemplateFragment } from "./TemplateFragment.ts";
 
 
-export class JsContentFragment extends TemplateFragment {
+export class HtmlCommentFragment extends TemplateFragment {
 }

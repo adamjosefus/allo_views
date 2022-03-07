@@ -1,4 +1,7 @@
-export * from './JsContentFragment.ts';
-export * from './createFragment.ts';
-export * from './Fragment.ts';
+export * from './TemplateFragment.ts';
+
 export * from './HtmlContentFragment.ts';
+export * from './HtmlCommentFragment.ts';
+
+export * from './JsContentFragment.ts';
+export * from './JsCommentFragment.ts';
