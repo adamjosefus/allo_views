@@ -8,6 +8,7 @@ import { Marked as Markdown } from "https://deno.land/x/markdown@v2.0.0/mod.ts";
 import { TemplateError } from "./TemplateError.ts";
 import { Context } from "./Context.ts";
 import { Fragment, createFragment, HtmlContentFragment, html, JsContentFragment, js } from "./fragments/mod.ts";
+import * as Filters from "./filters.ts";
 
 
 export type ParamsType<ValueType> = Record<string, ValueType>;
@@ -45,22 +46,14 @@ export class Template {
 
 
     constructor() {
-        this.#addNormalizedFilter('noescape', (ctx: Context, s: string) => {
-            return createFragment(ctx, s);
-        });
+        this.#addNormalizedFilter('noescape', Filters.noescape);
+        this.#addNormalizedFilter('json', Filters.json);
+        this.#addNormalizedFilter('markdown', Filters.markdown);
 
-        this.#addNormalizedFilter('json', (_ctx: Context, s: unknown) => {
-            return createFragment(Context.JsContent, JSON.stringify(s));
-        });
-
-        this.#addNormalizedFilter('markdown', (_ctx: Context, s: string) => {
-            return createFragment(Context.HtmlContent, Markdown.parse(s).content);
-        });
-
-        this.addFilter('trim', (s: string) => s.trim());
-        this.addFilter('lower', (s: string) => s.toLowerCase());
-        this.addFilter('upper', (s: string) => s.toUpperCase());
-        this.addFilter('firstUpper', (s: string) => s.substring(0, 1).toUpperCase() + s.substring(1));
+        this.addFilter('trim', Filters.trim);
+        this.addFilter('lower', Filters.lower);
+        this.addFilter('upper', Filters.upper);
+        this.addFilter('firstUpper', Filters.firstUpper);
     }
 
 
