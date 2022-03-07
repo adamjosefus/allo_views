@@ -2,12 +2,12 @@
  * @copyright Copyright (c) 2022 Adam Josefus
  */
 
-import { TemplateError } from "./TemplateError.ts";
-import { ContentFragment } from "./ContentFragment.ts";
-import { HtmlContentFragment, html } from "./HtmlContentFragment.ts";
-import { JsContentFragment, js } from "./JsContentFragment.ts";
 import { Cache } from "https://deno.land/x/allo_caching@v1.2.0/mod.ts";
 import { Marked as Markdown } from "https://deno.land/x/markdown@v2.0.0/mod.ts";
+
+import { TemplateError } from "./TemplateError.ts";
+import { Context } from "./Context.ts";
+import { Fragment, createFragment, HtmlContentFragment, html, JsContentFragment, js } from "./fragments/mod.ts";
 
 
 export type ParamsType<ValueType> = Record<string, ValueType>;
@@ -20,7 +20,7 @@ export type FilterCallbackType = {
 
 type FilterNormalizedCallbackType = {
     // deno-lint-ignore no-explicit-any
-    (context: RenderingContext, ...args: any[]): any;
+    (context: Context, ...args: any[]): any;
 }
 
 type FilterListType = {
@@ -35,17 +35,6 @@ type ContentPartsType = {
 };
 
 
-type FileCacheType<ValueType> = {
-    value: ValueType,
-}
-
-
-const enum RenderingContext {
-    HTML = 'html',
-    JS = 'js'
-}
-
-
 export class Template {
 
     readonly #scriptElementParser = /(?<openTag>\<script.*?\>)(?<content>.*?)(?<closeTag><\/script>)/gs;
@@ -56,36 +45,22 @@ export class Template {
 
 
     constructor() {
-        this.#addNormalizedFilter('noescape', (ctx: RenderingContext, s: string) => {
-            return this.#createContentPartByContext(ctx, s);
+        this.#addNormalizedFilter('noescape', (ctx: Context, s: string) => {
+            return createFragment(ctx, s);
         });
 
-        this.#addNormalizedFilter('json', (_ctx: RenderingContext, s: unknown) => {
-            return this.#createContentPartByContext(RenderingContext.JS, JSON.stringify(s));
+        this.#addNormalizedFilter('json', (_ctx: Context, s: unknown) => {
+            return createFragment(Context.JsContent, JSON.stringify(s));
         });
 
-        this.#addNormalizedFilter('markdown', (_ctx: RenderingContext, s: string) => {
-            return this.#createContentPartByContext(RenderingContext.HTML, Markdown.parse(s).content);
+        this.#addNormalizedFilter('markdown', (_ctx: Context, s: string) => {
+            return createFragment(Context.HtmlContent, Markdown.parse(s).content);
         });
 
         this.addFilter('trim', (s: string) => s.trim());
         this.addFilter('lower', (s: string) => s.toLowerCase());
         this.addFilter('upper', (s: string) => s.toUpperCase());
         this.addFilter('firstUpper', (s: string) => s.substring(0, 1).toUpperCase() + s.substring(1));
-    }
-
-
-    #createContentPartByContext(context: RenderingContext, bases: string[] | string, values: unknown[] = []): ContentFragment {
-        switch (context) {
-            case RenderingContext.HTML:
-                return new HtmlContentFragment(bases, values);
-
-            case RenderingContext.JS:
-                return new JsContentFragment(bases, values);
-
-            default:
-                throw new TemplateError(`Unknown renderning context "${context}"`);
-        }
     }
 
 
@@ -130,10 +105,10 @@ export class Template {
 
         for (let i = 0; i < Math.max(htmlContents.length, scriptContents.length); i++) {
             const html = htmlContents[i];
-            if (html) buffer.push(this.#processRenderString(RenderingContext.HTML, html, templateParams));
+            if (html) buffer.push(this.#processRenderString(Context.HtmlContent, html, templateParams));
 
             const js = scriptContents[i];
-            if (js) buffer.push(this.#processRenderString(RenderingContext.JS, js, templateParams));
+            if (js) buffer.push(this.#processRenderString(Context.JsContent, js, templateParams));
         }
 
         return buffer.join('');
@@ -191,7 +166,7 @@ export class Template {
     }
 
 
-    #processRenderString(context: RenderingContext, s: string, templateParams: ParamsType<unknown> = {}) {
+    #processRenderString(context: Context, s: string, templateParams: ParamsType<unknown> = {}) {
         this.#paramsParser.lastIndex = 0;
         // deno-lint-ignore no-explicit-any
         const final = s.replace(this.#paramsParser, (_match: string, ...exec: any[]) => {
@@ -247,11 +222,11 @@ export class Template {
             // Final value
             const contentPart = ((s) => {
                 switch (context) {
-                    case RenderingContext.HTML:
+                    case Context.HtmlContent:
                         if (quote !== null) return html`"${s}"`;
                         else return html`${s}`;
 
-                    case RenderingContext.JS:
+                    case Context.JsContent:
                         return js`${s}`;
 
                     default: throw new TemplateError(`Unknown renderning context "${context}"`);

@@ -2,10 +2,10 @@
  * @copyright Copyright (c) 2022 Adam Josefus
  */
 
-import { ContentFragment } from "./ContentFragment.ts";
+import { Fragment } from "./Fragment.ts";
 
 
-export class JsContentFragment extends ContentFragment {
+export class JsContentFragment extends Fragment {
     
     escape(s: unknown): string {
         return JSON.stringify(s);

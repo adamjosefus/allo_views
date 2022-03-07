@@ -2,10 +2,10 @@
  * @copyright Copyright (c) 2022 Adam Josefus
  */
 
-import { ContentFragment } from "./ContentFragment.ts";
+import { Fragment } from "./Fragment.ts";
 
 
-export class HtmlContentFragment extends ContentFragment {
+export class HtmlContentFragment extends Fragment {
 
     #regex = {
         specialChars: /[&<>"']/g,

@@ -3,6 +3,6 @@
  */
 
 export const enum Context {
-    HTML = 'html',
-    JS = 'js'
+    HtmlContent = 'html-content',
+    JsContent = 'js-content'
 }
