@@ -20,15 +20,15 @@ type SliceType = {
 
 export class TemplateParser {
 
-    readonly #scriptTagParser = /(?<openTag>\<script.*?\>)(?<content>.*?)(?<closeTag><\/script>)/gs;
-    readonly #jsCommentParser = /(?:((["'`])(?:(?:\\\\)|\\\2|(?!\\\2)\\|(?!\2).|[\n\r])*\2)|(\/\*(?:(?!\*\/).|[\n\r])*\*\/)|(\/\/[^\n\r]*(?:[\n\r]+|$))|((?:=|:)\s*(?:\/(?:(?:(?!\\*\/).)|\\\\|\\\/|[^\\]\[(?:\\\\|\\\]|[^]])+\])+\/))|((?:\/(?:(?:(?!\\*\/).)|\\\\|\\\/|[^\\]\[(?:\\\\|\\\]|[^]])+\])+\/)[gimy]?\.(?:exec|test|match|search|replace|split)\()|(\.(?:exec|test|match|search|replace|split)\((?:\/(?:(?:(?!\\*\/).)|\\\\|\\\/|[^\\]\[(?:\\\\|\\\]|[^]])+\])+\/))|(<!--(?:(?!-->).)*-->))/g;
+    static readonly #scriptTagParser = /(?<openTag>\<script.*?\>)(?<content>.*?)(?<closeTag><\/script>)/gs;
+    static readonly #jsCommentParser = /(?:((["'`])(?:(?:\\\\)|\\\2|(?!\\\2)\\|(?!\2).|[\n\r])*\2)|(\/\*(?:(?!\*\/).|[\n\r])*\*\/)|(\/\/[^\n\r]*(?:[\n\r]+|$))|((?:=|:)\s*(?:\/(?:(?:(?!\\*\/).)|\\\\|\\\/|[^\\]\[(?:\\\\|\\\]|[^]])+\])+\/))|((?:\/(?:(?:(?!\\*\/).)|\\\\|\\\/|[^\\]\[(?:\\\\|\\\]|[^]])+\])+\/)[gimy]?\.(?:exec|test|match|search|replace|split)\()|(\.(?:exec|test|match|search|replace|split)\((?:\/(?:(?:(?!\\*\/).)|\\\\|\\\/|[^\\]\[(?:\\\\|\\\]|[^]])+\])+\/))|(<!--(?:(?!-->).)*-->))/g;
 
 
-    parse(source: string): readonly TemplateFragment[] {
+    static parse(source: string): readonly TemplateFragment[] {
         const computeJsSlices = (source: string): readonly SliceType[] => {
             const slices: SliceType[] = [];
 
-            const parser = this.#scriptTagParser;
+            const parser = TemplateParser.#scriptTagParser;
             parser.lastIndex = 0;
 
             let result: RegExpExecArray | null = null
@@ -68,20 +68,20 @@ export class TemplateParser {
 
             return [
                 fragments,
-                htmlSlice ? this.#createHtmlFragments(htmlSlice.content) : [],
-                jsSlice ? this.#createJsFragments(jsSlice.content) : [],
+                htmlSlice ? TemplateParser.#createHtmlFragments(htmlSlice.content) : [],
+                jsSlice ? TemplateParser.#createJsFragments(jsSlice.content) : [],
             ].flat();
         }, []);
     }
 
 
-    #createHtmlFragments(source: string): HtmlContentFragment[] {
+    static #createHtmlFragments(source: string): HtmlContentFragment[] {
         return [new HtmlContentFragment(source)];
     }
 
 
-    #createJsFragments(source: string): (JsContentFragment | JsCommentFragment)[] {
-        const regex = this.#jsCommentParser;
+    static #createJsFragments(source: string): (JsContentFragment | JsCommentFragment)[] {
+        const regex = TemplateParser.#jsCommentParser;
         regex.lastIndex = 0;
 
         type PrefragmentType = {
