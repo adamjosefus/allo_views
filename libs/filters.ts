@@ -3,25 +3,24 @@
  */
 
 import { Marked as Markdown } from "https://deno.land/x/markdown@v2.0.0/mod.ts";
-import { type Fragment, createFragment } from "./fragments/mod.ts";
-import { Context } from "./Context.ts";
+import { type Context, createContext, ContextOptions } from "./contexts/mod.ts";
 
 
-export type FilterType<T = unknown> = (ctx: Context, content: T) => Fragment | string;
+export type FilterType<T = unknown> = (ctx: ContextOptions, content: T) => Context | string;
 
 
 export const noescape: FilterType<string> = (ctx, content: string) => {
-    return createFragment(ctx, content);
+    return createContext(ctx, content);
 };
 
 
 export const json: FilterType<unknown> = (_ctx, content) => {
-    return createFragment(Context.JsContent, JSON.stringify(content));
+    return createContext(ContextOptions.JsContent, JSON.stringify(content));
 };
 
 
 export const markdown: FilterType<string> = (_ctx, s) => {
-    return createFragment(Context.HtmlContent, Markdown.parse(s).content);
+    return createContext(ContextOptions.HtmlContent, Markdown.parse(s).content);
 }
 
 
