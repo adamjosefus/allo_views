@@ -62,9 +62,9 @@ export class Template {
 
 
     #getFilter(name: string): FilterNormalizedCallbackType {
-        if (this.#hasFilter(name)) {
-            return this.#filters.get(name)!;
-        } else throw new TemplateError(`Filter not found by name "${name}".`);
+        if (!this.#hasFilter(name)) throw new TemplateError(`Filter not found by name "${name}".`);
+
+        return this.#filters.get(name)!;
     }
 
 
