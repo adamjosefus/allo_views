@@ -26,7 +26,7 @@ type FilterNormalizedCallbackType = {
 
 
 
-export class Template {
+export class TemplateFactory {
     readonly #filters: Map<string, FilterNormalizedCallbackType> = new Map();
     readonly #fragmentsCache = new Cache<TemplateFragment[]>();
     readonly #fragmentsParser = new FragmentsParser();
