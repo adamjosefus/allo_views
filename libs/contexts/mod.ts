@@ -1,4 +1,4 @@
-export * from "./ContextOptions.ts";
+export * from "./EscapeContext.ts";
 export * from "./Context.ts";
 export * from "./createContext.ts";
 export * from "./HtmlContentContext.ts";

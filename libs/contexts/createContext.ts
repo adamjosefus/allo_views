@@ -2,18 +2,18 @@
  * @copyright Copyright (c) 2022 Adam Josefus
  */
 
-import { ContextOptions } from "./ContextOptions.ts";
+import { EscapeContext } from "./EscapeContext.ts";
 import { type Context } from "./Context.ts";
 import { HtmlContentContext } from "./HtmlContentContext.ts";
 import { JsContentContext } from "./JsContentContext.ts";
 
 
-export const createContext = (context: ContextOptions, bases: string[] | string, values: unknown[] = []): Context => {
+export const createContext = (context: EscapeContext, bases: string[] | string, values: unknown[] = []): Context => {
     switch (context) {
-        case ContextOptions.HtmlContent:
+        case EscapeContext.Html:
             return new HtmlContentContext(bases, values);
 
-        case ContextOptions.JsContent:
+        case EscapeContext.JsScript:
             return new JsContentContext(bases, values);
 
         default:
