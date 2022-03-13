@@ -72,11 +72,19 @@ Deno.test("compileTemplateFragment – inlines", () => {
 Deno.test("compileTemplateFragment – inlines & param variables", () => {
     const params: Record<string, unknown> = {
         "number1000": 1000,
+        "get1000": () => 1000,
     }
 
     const sets: { source: string, expected: [string[], unknown[]] }[] = [
         {
             source: `Before {{=123 + number1000}} After`,
+            expected: [
+                ["Before ", " After"],
+                [1123],
+            ],
+        },
+        {
+            source: `Before {{=123 + get1000()}} After`,
             expected: [
                 ["Before ", " After"],
                 [1123],
