@@ -8,7 +8,7 @@ import { Context, type ContextTag } from "./Context.ts";
 export class JsContentContext extends Context {
     
     escape(s: unknown): string {
-        return JSON.stringify(s);
+        return JSON.stringify(s, null, 4);
     }
 
 
