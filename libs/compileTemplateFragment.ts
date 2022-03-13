@@ -149,8 +149,6 @@ export function compileTemplateFragment(source: string): [bases: string[], expre
 
         const { name, stringQuote, inline, callable, callableArgs, filters } = match.groups ?? {} as Record<string, string | null | undefined>;
 
-        // console.log({ name, stringQuote, inline, callable, callableArgs, filters });
-
         // Set tag
         const tag = ((): ExpressionType => {
             // Inline force string value
