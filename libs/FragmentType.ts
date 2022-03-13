@@ -4,6 +4,10 @@
 
 import { EscapeContext } from "./contexts/EscapeContext.ts";
 
+
+/**
+ * @internal
+ */
 export type FragmentType = {
     escapeContext: EscapeContext,
     source: string,
