@@ -4,6 +4,7 @@ const tagParser = /\{\{((?<name>\w+)|(\=(?<stringQuote>["']?)(?<inline>.+)\4))(\
 
 
 function evalEscape(v: unknown): string {
+    if (typeof v === 'function') return v.toString();
     if (typeof v === 'number') return v.toString();
     if (typeof v === 'string') return `"${v.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`;
 
@@ -31,9 +32,20 @@ function createStringExpression(inline: string, quoteMark: string): ExpressionTy
 function createInlineExpression(inline: string): ExpressionType<Expression.Inline> {
     const serialize = (params: Record<string, unknown>) => {
         const paramArr = Object.entries(params);
+
+        const paramVariableArr = paramArr.filter(([_name, value]) => {
+            return typeof value !== 'function';
+        });
+
+        const paramFunctionArr = paramArr.filter(([_name, value]) => {
+            return typeof value === 'function';
+        }) as [string, (...args: unknown[]) => unknown][];
+
+
         const script = [
             `(() => {`,
-            ...paramArr.map(([name, value]) => `const ${name} = ${evalEscape(value)};`),
+            ...paramVariableArr.map(([name, value]) => `const ${name} = ${evalEscape(value)};`),
+            ...paramFunctionArr.map(([name, value]) => `const ${name} = ${evalEscape(value)};`),
             `return ${inline};`,
             `})()`,
         ].join('\n');
