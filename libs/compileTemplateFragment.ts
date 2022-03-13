@@ -3,12 +3,78 @@ import { Expression, type ExpressionType } from "./expressionTypes.ts";
 const tagParser = /\{\{((?<name>\w+)|(\=(?<stringQuote>["']?)(?<inline>.+)\4))(\((?<callable>.*)\))?(?<filters>(\|\w+(\:.+)*)*)?\}\}/g;
 
 
-function escapeForEval(v: unknown): string {
+function evalEscape(v: unknown): string {
     if (typeof v === 'number') return v.toString();
     if (typeof v === 'string') return `"${v.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`;
 
     return JSON.stringify(v);
 }
+
+function createStringExpression(inline: string, quoteMark: string): ExpressionType<Expression.Inline> {
+    const serialize = () => {
+        return eval.apply(null, [`${quoteMark}${inline}${quoteMark}`]);
+    }
+
+    return {
+        type: Expression.Inline,
+        serialize: (_params) => {
+            // TODO: Throw error or something
+            try {
+                return serialize();
+            } catch (_error) {
+                return null;
+            }
+        }
+    };
+}
+
+function createInlineExpression(inline: string): ExpressionType<Expression.Inline> {
+    const serialize = (params: Record<string, unknown>) => {
+        const paramArr = Object.entries(params);
+        const script = [
+            `(() => {`,
+            ...paramArr.map(([name, value]) => `const ${name} = ${evalEscape(value)};`),
+            `return ${inline};`,
+            `})()`,
+        ].join('\n');
+
+        return eval.apply(null, [script]);
+    }
+
+    return {
+        type: Expression.Inline,
+        serialize: (params) => {
+            // TODO: Throw error or something
+            try {
+                return serialize(params);
+            } catch (_error) {
+                return null;
+            }
+        }
+    };
+}
+
+function createVariableExpression(name: string) {
+    const serialize = (params: Record<string, unknown>) => {
+        const paramStore = new Map(Object.entries(params));
+        if (!paramStore.has(name)) throw new Error(`Missing parameter: ${name}`);
+        
+        return paramStore.get(name)!;
+    }
+
+    return {
+        type: 'variable',
+        serialize: (params) => {
+            // TODO: Throw error or something
+            try {
+                return serialize(params);
+            } catch (_error) {
+                return null;
+            }
+        }
+    } as ExpressionType<Expression.Variable>;
+}
+
 
 
 export function compileTemplateFragment(source: string): [bases: string[], expressions: ExpressionType[]] {
@@ -34,55 +100,13 @@ export function compileTemplateFragment(source: string): [bases: string[], expre
         // Set tag
         const tag = ((): ExpressionType => {
             // Force string inline value
-            if (inline && stringQuote) {
-                return {
-                    type: Expression.Inline,
-                    serialize: (_params) => eval.apply(null, [`${stringQuote}${inline}${stringQuote}`]),
-                } as ExpressionType<Expression.Inline>;
-            }
+            if (inline && stringQuote) return createStringExpression(inline, stringQuote);
 
             // Inline value
-            if (inline) {
-                return {
-                    type: 'inline',
-                    serialize: (params) => {
-                        try {
-                            const paramArr = Object.entries(params);
-                            const script = [
-                                `(() => {`,
-                                ...paramArr.map(([name, value]) => `const ${name} = ${escapeForEval(value)};`),
-                                `return ${inline};`,
-                                `})()`,
-                            ].join('\n');
-
-                            return eval.apply(null, [script]);
-                        } catch (_error) {
-                            // TODO: Throw error or something
-                            return null;
-                        }
-
-                    }
-                } as ExpressionType<Expression.Inline>;
-            }
-
+            if (inline) return createInlineExpression(inline);
 
             // Variable
-            if (name) {
-                return {
-                    type: 'variable',
-                    serialize: (params) => {
-                        const paramStore = new Map(Object.entries(params));
-
-                        if (paramStore.has(name)) {
-                            return paramStore.get(name)!;
-                        } else {
-                            // TODO: Throw error or something
-                            return null;
-                        }
-                    },
-                    name,
-                } as ExpressionType<Expression.Variable>;
-            }
+            if (name) return createVariableExpression(name);
 
             throw new Error("Unknown tag type");
         })();
