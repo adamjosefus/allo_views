@@ -79,20 +79,4 @@ export class TemplateEngine {
 
         return template.render(params);
     }
-
-
-    // TODO: render to response
-
-
-    /**
-     * Create template fragments from source file.
-     * @param path File path to template.
-     * @returns 
-     */
-    #createFragments(path: string): FragmentType[] {
-        const absolutePath = isAbsolute(path) ? path : join(Deno.cwd(), path);
-        const source = Deno.readTextFileSync(absolutePath);
-
-        return this.#fragmentsParser.parse(source);
-    }
 }
