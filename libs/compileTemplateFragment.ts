@@ -1,6 +1,6 @@
 import { Expression, type ExpressionType } from "./expressionTypes.ts";
 
-const tagParser = /\{\{((?<name>\w+)|(\=(?<stringQuote>["']?)(?<inline>.+)\4))(\((?<callable>.*)\))?(?<filters>(\|\w+(\:.+)*)*)?\}\}/g;
+const tagParser = /\{\{((?<name>\w+)|(\=(?<stringQuote>["']?)(?<inline>.+)\4))(?<callable>\((?<callableArgs>.*)\))?(?<filters>(\|\w+(\:.+)*)*)?\}\}/g;
 
 
 function evalEscape(v: unknown): string {
@@ -10,6 +10,7 @@ function evalEscape(v: unknown): string {
 
     return JSON.stringify(v);
 }
+
 
 function createStringExpression(inline: string, quoteMark: string): ExpressionType<Expression.Inline> {
     const serialize = () => {
@@ -28,6 +29,7 @@ function createStringExpression(inline: string, quoteMark: string): ExpressionTy
         }
     };
 }
+
 
 function createInlineExpression(inline: string): ExpressionType<Expression.Inline> {
     const serialize = (params: Record<string, unknown>) => {
@@ -66,7 +68,8 @@ function createInlineExpression(inline: string): ExpressionType<Expression.Inlin
     };
 }
 
-function createVariableExpression(name: string) {
+
+function createVariableExpression(name: string): ExpressionType<Expression.Variable> {
     const serialize = (params: Record<string, unknown>) => {
         const paramStore = new Map(Object.entries(params));
         if (!paramStore.has(name)) throw new Error(`Missing parameter: ${name}`);
@@ -75,7 +78,7 @@ function createVariableExpression(name: string) {
     }
 
     return {
-        type: 'variable',
+        type: Expression.Variable,
         serialize: (params) => {
             // TODO: Throw error or something
             try {
@@ -84,7 +87,30 @@ function createVariableExpression(name: string) {
                 return null;
             }
         }
-    } as ExpressionType<Expression.Variable>;
+    };
+}
+
+
+function createFunctionExpression(name: string): ExpressionType<Expression.CallableVariable> {
+    const serialize = (params: Record<string, unknown>) => {
+        const paramStore = new Map(Object.entries(params));
+        if (!paramStore.has(name)) throw new Error(`Missing parameter: ${name}`);
+
+        const fce = paramStore.get(name) as (...args: unknown[]) => unknown;        
+        return fce();
+    }
+
+    return {
+        type: Expression.CallableVariable,
+        serialize: (params) => {
+            // TODO: Throw error or something
+            try {
+                return serialize(params);
+            } catch (_error) {
+                return null;
+            }
+        }
+    };
 }
 
 
@@ -106,16 +132,20 @@ export function compileTemplateFragment(source: string): [bases: string[], expre
         const start = match.index!;
         const end = regex.lastIndex!;
 
-        const { name, stringQuote, inline, callable, filters } = match.groups ?? {} as Record<string, string | null | undefined>;
-        // console.log({ name, string, value, callable, filters });
+        const { name, stringQuote, inline, callable, callableArgs, filters } = match.groups ?? {} as Record<string, string | null | undefined>;
+        
+        // console.log({ name, stringQuote, inline, callable, callableArgs, filters });
 
         // Set tag
         const tag = ((): ExpressionType => {
-            // Force string inline value
+            // Inline force string value
             if (inline && stringQuote) return createStringExpression(inline, stringQuote);
 
             // Inline value
             if (inline) return createInlineExpression(inline);
+
+            // Variable callable
+            if (name && callable) return createFunctionExpression(name);
 
             // Variable
             if (name) return createVariableExpression(name);
