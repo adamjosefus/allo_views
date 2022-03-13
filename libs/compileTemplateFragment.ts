@@ -1,4 +1,4 @@
-import { type ExpressionSerializeCallback } from "./expressionTypes.ts";
+import { type ExpressionSerializeCallback } from "./ExpressionSerializeCallback.ts";
 
 const tagParser = /\{\{((?<name>\w+)|(\=(?<stringQuote>["']?)(?<inline>.+)\4))(?<callable>\((?<callableArgs>.*)\))?(?<filters>(\|\w+(\:.+)*)*)?\}\}/g;
 
