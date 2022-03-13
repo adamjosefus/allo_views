@@ -1,13 +1,19 @@
 import { join, isAbsolute } from "https://deno.land/std@0.128.0/path/mod.ts";
 import { Cache } from "https://deno.land/x/allo_caching@v1.2.0/mod.ts";
+import { FragmentsFactory } from "./FragmentsFactory.ts";
+import { FragmentType } from "./FragmentType.ts";
 
 
 export class Template {
-
+    // Properties
     readonly #path: string;
-    readonly #sourceCache = new Cache<string>();
 
-    readonly #maskParser = /\{\{((?<name>\w+)|(\=(["']?)(?<value>.+)\4))((?<filters>(\|\w+(\:.+)*)*)|(\u0020+(?<atributte>.+?)))?\}\}/g;
+    // Models
+    readonly #fragmentsFactory = new FragmentsFactory();
+
+    // Caches
+    readonly #sourceContentCache = new Cache<string>();
+    readonly #fragmentsCache = new Cache<FragmentType[]>();
 
 
     constructor(path: string) {
@@ -15,32 +21,24 @@ export class Template {
     }
 
 
-    get #source(): string {
+    get #sourceContent(): string {
         const file = this.#path;
-
-        return this.#sourceCache.load(file, () => Deno.readTextFileSync(file), { files: [file] });
+        return this.#sourceContentCache.load(file, () => {
+            return Deno.readTextFileSync(file);
+        }, { files: [file] });
     }
 
 
-    // get #fragments(): TemplateFragment[] {
-    //     return this.#fragmentsParser.parse(this.#source);
-    // }
+    get #fragments(): FragmentType[] {
+        const file = this.#path;
+        return this.#fragmentsCache.load(file, () => {
+            return this.#fragmentsFactory.create(this.#sourceContent);
+        }, { files: [file] });
+    }
 
 
     render(params: Record<string, unknown>): string {
-        return this.#source;
-    }
-
-    
-    #findMasks(source: string) {
-        const masks = new Map<string, string>();
-
-        let match: RegExpMatchArray | null;
-        while ((match = this.#maskParser.exec(source)) !== null) {
-            const {name, value, filters, atributte} = match.groups ?? {};
-
-        }
-
-        return masks;
+        this.#fragments.map()
+        return this.#sourceContent;
     }
 }

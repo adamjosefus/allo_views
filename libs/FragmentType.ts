@@ -10,5 +10,5 @@ import { EscapeContext } from "./contexts/EscapeContext.ts";
  */
 export type FragmentType = {
     escapeContext: EscapeContext,
-    source: string,
+    sourceContent: string,
 }
