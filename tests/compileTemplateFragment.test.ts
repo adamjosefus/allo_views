@@ -113,14 +113,71 @@ Deno.test("compileTemplateFragment – inlines & param variables", () => {
 Deno.test("compileTemplateFragment – variable", () => {
     const params: Record<string, unknown> = {
         "foo": "foo",
+        "yes": true,
+        "no": false,
+        "number1": 123,
+        "number2": 123.456,
+        "number3": 123_456,
+        "arr": ["foo", "bar", 1, 2, true, false],
     }
 
-    const sets: { source: string, expected: [string[], string[]] }[] = [
+    const sets: { source: string, expected: [string[], unknown[]] }[] = [
         {
             source: `Before {{foo}} After`,
             expected: [
                 ["Before ", " After"],
                 ["foo"],
+            ],
+        },
+        {
+            source: `Before {{yes}} After`,
+            expected: [
+                ["Before ", " After"],
+                [true],
+            ],
+        },
+        {
+            source: `Before {{no}} After`,
+            expected: [
+                ["Before ", " After"],
+                [false],
+            ],
+        },
+        {
+            source: `Before {{number1}} After`,
+            expected: [
+                ["Before ", " After"],
+                [123],
+            ],
+        },
+        {
+            source: `Before {{number2}} After`,
+            expected: [
+                ["Before ", " After"],
+                [123.456],
+            ],
+        },
+        {
+            source: `Before {{number3}} After`,
+            expected: [
+                ["Before ", " After"],
+                [123_456],
+            ],
+        },
+
+        {
+            source: `AA {{number1}} BB {{number2}} CC {{number3}} DD`,
+            expected: [
+                ["AA ", " BB ", " CC ", " DD"],
+                [123, 123.456, 123_456],
+            ],
+        },
+
+        {
+            source: `Before {{arr}} After`,
+            expected: [
+                ["Before ", " After"],
+                [["foo", "bar", 1, 2, true, false]],
             ],
         },
     ];
