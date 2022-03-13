@@ -59,7 +59,7 @@ Deno.test("compileTemplateFragment – inlines", () => {
             [
                 bases,
                 expressions
-                    .filter(x => x.type === "inline")
+                    .filter(x => x.type === Expression.Inline)
                     .map(x => x as ExpressionType<Expression.Inline>)
                     .map(({ serialize }) => serialize({}))
             ],
@@ -100,7 +100,7 @@ Deno.test("compileTemplateFragment – inlines & param variables", () => {
             [
                 bases,
                 expressions
-                    .filter(x => x.type === "inline")
+                    .filter(x => x.type === Expression.Inline)
                     .map(x => x as ExpressionType<Expression.Inline>)
                     .map(({ serialize }) => serialize(params))
             ],
@@ -190,8 +190,41 @@ Deno.test("compileTemplateFragment – variable", () => {
             [
                 bases,
                 expressions
-                    .filter(x => x.type === "variable")
+                    .filter(x => x.type === Expression.Variable)
                     .map(x => x as ExpressionType<Expression.Variable>)
+                    .map(({ serialize }) => serialize(params))
+            ],
+            expected,
+        );
+    }
+});
+
+
+Deno.test("compileTemplateFragment – variable calleble", () => {
+    const params: Record<string, unknown> = {
+        "fce1": () => "Function 1",
+    }
+
+    const sets: { source: string, expected: [string[], unknown[]] }[] = [
+        {
+            source: `Before {{fce1()}} After`,
+            expected: [
+                ["Before ", " After"],
+                ["Function 1"],
+            ],
+        },
+    ];
+
+    for (const set of sets) {
+        const { source, expected } = set;
+        const [bases, expressions] = compileTemplateFragment(source);
+
+        assertEquals(
+            [
+                bases,
+                expressions
+                    .filter(x => x.type === Expression.CallableVariable)
+                    .map(x => x as ExpressionType<Expression.CallableVariable>)
                     .map(({ serialize }) => serialize(params))
             ],
             expected,
