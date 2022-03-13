@@ -78,12 +78,6 @@ export class TemplateEngine {
         const template = new Template(path)
 
         return template.render(params);
-
-
-
-        // const fragments = this.#fragmentsCache.load(path, () => this.#createFragments(path), { files: path });
-
-        // return fragments.map(fr => fr.source).join('');
     }
 
 
