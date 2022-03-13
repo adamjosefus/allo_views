@@ -102,7 +102,7 @@ export function compileTemplateFragment(source: string): [bases: string[], expre
 
         expressions.push(params => {
             try {
-                return exprSerialize(params);;
+                return exprSerialize(params);
             } catch (_error) {
                 // TODO: Throw error or something
                 console.log("Expression serialize error:", _error);
