@@ -2,13 +2,8 @@
  * @copyright Copyright (c) 2022 Adam Josefus
  */
 
-import {
-    type TemplateFragment,
-    HtmlContentFragment,
-    // HtmlCommentFragment,
-    JsContentFragment,
-    JsCommentFragment,
-} from "./fragments/mod.ts";
+import { EscapeContext } from "./contexts/EscapeContext.ts";
+import { type FragmentType } from "./FragmentType.ts";
 
 
 type SliceType = {
@@ -27,7 +22,14 @@ export class FragmentsParser {
     readonly #jsCommentParser = /(?:((["'`])(?:(?:\\\\)|\\\2|(?!\\\2)\\|(?!\2).|[\n\r])*\2)|(\/\*(?:(?!\*\/).|[\n\r])*\*\/)|(\/\/[^\n\r]*(?:[\n\r]+|$))|((?:=|:)\s*(?:\/(?:(?:(?!\\*\/).)|\\\\|\\\/|[^\\]\[(?:\\\\|\\\]|[^]])+\])+\/))|((?:\/(?:(?:(?!\\*\/).)|\\\\|\\\/|[^\\]\[(?:\\\\|\\\]|[^]])+\])+\/)[gimy]?\.(?:exec|test|match|search|replace|split)\()|(\.(?:exec|test|match|search|replace|split)\((?:\/(?:(?:(?!\\*\/).)|\\\\|\\\/|[^\\]\[(?:\\\\|\\\]|[^]])+\])+\/))|(<!--(?:(?!-->).)*-->))/g;
 
 
-    parse(source: string): TemplateFragment[] {
+    parse(source: string): FragmentType[] {
+        // const firstLine = source.split('\n')[0].trim();
+        // TODO: Detect main type of fragment (html, js, json, xml, plaintext, ...)
+        return this.#parseHtml(source);
+    }
+
+
+    #parseHtml(source: string): FragmentType[] {
         const computeJsSlices = (source: string): readonly SliceType[] => {
             const slices: SliceType[] = [];
 
@@ -66,8 +68,8 @@ export class FragmentsParser {
         const jsSlices = computeJsSlices(source);
         const htmlSlices = computeHtmlSlices(source, [0, ...jsSlices.map(s => [s.start, s.end]).flat()]);
 
-        return htmlSlices.reduce((fragments: TemplateFragment[], htmlSlice, i) => {
-            const jsSlice = jsSlices[i] as SliceType | undefined;
+        return htmlSlices.reduce((fragments: FragmentType[], htmlSlice, i) => {
+            const jsSlice = jsSlices[i];
 
             return [
                 fragments,
@@ -78,18 +80,23 @@ export class FragmentsParser {
     }
 
 
-    #createHtmlFragments(source: string): HtmlContentFragment[] {
-        return [new HtmlContentFragment(source)];
+    #createHtmlFragments(source: string): FragmentType[] {
+        return [{
+            escapeContext: EscapeContext.Html,
+            source: source,
+        }];
     }
 
 
-    #createJsFragments(source: string): (JsContentFragment | JsCommentFragment)[] {
+    #createJsFragments(source: string): FragmentType[] {
+        console.log("source", source);
+        
         const regex = this.#jsCommentParser;
         regex.lastIndex = 0;
 
         type PrefragmentType = {
             comment: boolean,
-            base: string,
+            source: string,
         }
 
         const prefragments: PrefragmentType[] = [];
@@ -107,7 +114,7 @@ export class FragmentsParser {
 
             prefragments.push({
                 comment: false,
-                base: source.substring(previous.end, start)
+                source: source.substring(previous.end, start)
             });
 
             previous.start = start;
@@ -117,29 +124,31 @@ export class FragmentsParser {
 
             prefragments.push({
                 comment: isComment,
-                base: source.substring(start, end)
+                source: source.substring(start, end)
             });
         }
 
         prefragments.push({
             comment: false,
-            base: source.substring(previous.end)
+            source: source.substring(previous.end)
         });
 
-        const fragments: TemplateFragment[] = prefragments
+        const fragments: FragmentType[] = prefragments
             // Join item with same type
             .reduce((acc: PrefragmentType[], curr) => {
                 const prev = acc.at(-1)
 
-                if (prev && prev.comment === curr.comment) prev.base += curr.base
+                if (prev && prev.comment === curr.comment) prev.source += curr.source
                 else acc.push(curr);
 
                 return acc;
             }, [])
             // Create fragments
-            .map(pre => {
-                if (pre.comment) return new JsCommentFragment(pre.base);
-                else return new JsContentFragment(pre.base);
+            .map(p => {
+                return {
+                    escapeContext: p.comment ? EscapeContext.JsComment : EscapeContext.JsScript,
+                    source: p.source,
+                }
             });
 
         return fragments;

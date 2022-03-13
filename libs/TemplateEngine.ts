@@ -5,13 +5,12 @@
 import { join, isAbsolute } from "https://deno.land/std@0.128.0/path/mod.ts";
 import { Cache } from "https://deno.land/x/allo_caching@v1.2.0/mod.ts";
 import { TemplateError } from "./TemplateError.ts";
-import { ContextOptions, html, js } from "./contexts/mod.ts";
+import { EscapeContext, html, js } from "./contexts/mod.ts";
 import { FragmentsParser } from "./FragmentsParser.ts";
-import { TemplateFragment } from "./fragments/mod.ts";
+import { FragmentType } from "./FragmentType.ts";
 import * as Filters from "./filters.ts";
+import { Template } from "./Template.ts";
 
-
-export type ParamsType<ValueType> = Record<string, ValueType>;
 
 
 export type FilterCallbackType = {
@@ -21,16 +20,16 @@ export type FilterCallbackType = {
 
 type FilterNormalizedCallbackType = {
     // deno-lint-ignore no-explicit-any
-    (context: ContextOptions, ...args: any[]): any;
+    (context: EscapeContext, ...args: any[]): any;
 }
 
 
 
-export class TemplateFactory {
-    readonly #filters: Map<string, FilterNormalizedCallbackType> = new Map();
-    readonly #fragmentsCache = new Cache<TemplateFragment[]>();
-    readonly #fragmentsParser = new FragmentsParser();
+export class TemplateEngine {
 
+    readonly #filters: Map<string, FilterNormalizedCallbackType> = new Map();
+    readonly #fragmentsCache = new Cache<FragmentType[]>();
+    readonly #fragmentsParser = new FragmentsParser();
 
     constructor() {
         this.#addNormalizedFilter('noescape', Filters.noescape);
@@ -68,26 +67,35 @@ export class TemplateFactory {
     }
 
 
-    render(templatePath: string, templateParams: ParamsType<unknown> = {}): string {
-        const fragments = this.#getFragments(templatePath);
+    /**
+     * 
+     * @param path File path to template.
+     * @param params Parameters to render.
+     * @returns Rendered template.
+     */
+    render(path: string, params: Record<string, unknown> = {}): string {
+        // TODO: Add cache.
+        const template = new Template(path)
 
-        return this.#renderFragments(fragments, templateParams);
+        return template.render(params);
+
+
+
+        // const fragments = this.#fragmentsCache.load(path, () => this.#createFragments(path), { files: path });
+
+        // return fragments.map(fr => fr.source).join('');
     }
 
 
-    #renderFragments(fragments: TemplateFragment[], params: ParamsType<unknown>): string {
-        return fragments.map(fragment => fragment.render(params)).join('');
-    }
+    // TODO: render to response
 
 
-    #getFragments(path: string): TemplateFragment[] {
-        return this.#fragmentsCache.load(path, () => this.#createFragments(path), {
-            files: [path]
-        });
-    }
-
-
-    #createFragments(path: string): TemplateFragment[] {
+    /**
+     * Create template fragments from source file.
+     * @param path File path to template.
+     * @returns 
+     */
+    #createFragments(path: string): FragmentType[] {
         const absolutePath = isAbsolute(path) ? path : join(Deno.cwd(), path);
         const source = Deno.readTextFileSync(absolutePath);
 
