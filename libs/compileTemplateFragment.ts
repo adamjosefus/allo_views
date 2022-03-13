@@ -3,34 +3,31 @@ import { type ExpressionSerializeCallback } from "./ExpressionSerializeCallback.
 const tagParser = /\{\{((?<name>\w+)|(\=(?<stringQuote>["']?)(?<inline>.+)\4))(?<callable>\((?<callableArgs>.*)\))?(?<filters>(\|\w+(\:.+)*)*)?\}\}/g;
 
 
-function evalEscape(v: unknown): string {
-    if (typeof v === 'function') return v.toString();
-    if (typeof v === 'number') return v.toString();
-    if (typeof v === 'string') return `"${v.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`;
+function generateJavascriptVariablesCode(params: Record<string, unknown>): string {
+    function escape(v: unknown): string {
+        if (typeof v === 'function') return v.toString();
+        if (typeof v === 'number') return v.toString();
+        if (typeof v === 'string') return `"${v.replaceAll('\\', '\\\\').replaceAll('"', '\\"')}"`;
 
-    return JSON.stringify(v);
-}
+        return JSON.stringify(v);
+    }
 
+    const arr = Object.entries(params);
 
-function generateJavascriptVariables(params: Record<string, unknown>): string {
-    const paramArr = Object.entries(params);
+    type VariableArr = [string, (...args: unknown[]) => unknown][];
+    type FunctionArr = [string, unknown][];
 
-    const variables = paramArr.filter(([_name, value]) => {
-        return typeof value !== 'function';
-    });
+    const vars = arr.filter(([_n, v]) => typeof v !== 'function') as VariableArr;
+    const funcs = arr.filter(([_n, v]) => typeof v === 'function') as FunctionArr;
 
-    const functions = paramArr.filter(([_name, value]) => {
-        return typeof value === 'function';
-    }) as [string, (...args: unknown[]) => unknown][];
-
-
-    return [...variables, ...functions]
-        .map(([name, value]) => `const ${name} = ${evalEscape(value)};`)
+    // Variables must be declared before functions
+    return [...vars, ...funcs]
+        .map(([n, v]) => `const ${n} = ${escape(v)};`)
         .join('\n');
 }
 
 
-function createStringExpression(inline: string, quoteMark: string): ExpressionSerializeCallback {
+function createStringSerializer(inline: string, quoteMark: string): ExpressionSerializeCallback {
     const serialize = () => {
         return eval.apply(null, [`${quoteMark}${inline}${quoteMark}`]);
     }
@@ -46,10 +43,10 @@ function createStringExpression(inline: string, quoteMark: string): ExpressionSe
 }
 
 
-function createInlineExpression(inline: string): ExpressionSerializeCallback {
+function createExpressionSerializer(inline: string): ExpressionSerializeCallback {
     const serialize = (params: Record<string, unknown>) => {
         const script = `(() => {
-            ${generateJavascriptVariables(params)}
+            ${generateJavascriptVariablesCode(params)}
             return ${inline};
         })();`;
 
@@ -67,7 +64,7 @@ function createInlineExpression(inline: string): ExpressionSerializeCallback {
 }
 
 
-function createVariableExpression(name: string): ExpressionSerializeCallback {
+function createVariableSerializer(name: string): ExpressionSerializeCallback {
     const serialize = (params: Record<string, unknown>) => {
         const paramStore = new Map(Object.entries(params));
         if (!paramStore.has(name)) throw new Error(`Missing parameter: ${name}`);
@@ -86,7 +83,7 @@ function createVariableExpression(name: string): ExpressionSerializeCallback {
 }
 
 
-function createFunctionExpression(name: string, rawArgs: string | null): ExpressionSerializeCallback {
+function createFunctionSerializer(name: string, rawArgs: string | null): ExpressionSerializeCallback {
     const serialize = (params: Record<string, unknown>) => {
         const paramStore = new Map(Object.entries(params));
         if (!paramStore.has(name)) throw new Error(`Missing parameter: ${name}`);
@@ -97,7 +94,7 @@ function createFunctionExpression(name: string, rawArgs: string | null): Express
             return fce();
         } else {
             const script = `(() => {
-                ${generateJavascriptVariables(params)}
+                ${generateJavascriptVariablesCode(params)}
                 return [${rawArgs}];
             })();`;
 
@@ -140,16 +137,16 @@ export function compileTemplateFragment(source: string): [bases: string[], expre
         // Set tag
         const tag = ((): ExpressionSerializeCallback => {
             // Inline force string value
-            if (inline && stringQuote) return createStringExpression(inline, stringQuote);
+            if (inline && stringQuote) return createStringSerializer(inline, stringQuote);
 
             // Inline value
-            if (inline) return createInlineExpression(inline);
+            if (inline) return createExpressionSerializer(inline);
 
             // Variable callable
-            if (name && callable) return createFunctionExpression(name, callableArgs ?? null);
+            if (name && callable) return createFunctionSerializer(name, callableArgs ?? null);
 
             // Variable
-            if (name) return createVariableExpression(name);
+            if (name) return createVariableSerializer(name);
 
             throw new Error("Unknown tag type");
         })();
