@@ -1,6 +1,5 @@
 import { assertEquals } from "https://deno.land/std@0.128.0/testing/asserts.ts";
 import { compileTemplateFragment } from "../libs/compileTemplateFragment.ts";
-import { Expression, ExpressionType } from "../libs/expressionTypes.ts";
 
 
 Deno.test("compileTemplateFragment – inlines", () => {
@@ -58,10 +57,7 @@ Deno.test("compileTemplateFragment – inlines", () => {
         assertEquals(
             [
                 bases,
-                expressions
-                    .filter(x => x.type === Expression.Inline)
-                    .map(x => x as ExpressionType<Expression.Inline>)
-                    .map(({ serialize }) => serialize({}))
+                expressions.map(serialize => serialize({}))
             ],
             expected,
         );
@@ -99,10 +95,7 @@ Deno.test("compileTemplateFragment – inlines & param variables", () => {
         assertEquals(
             [
                 bases,
-                expressions
-                    .filter(x => x.type === Expression.Inline)
-                    .map(x => x as ExpressionType<Expression.Inline>)
-                    .map(({ serialize }) => serialize(params))
+                expressions.map(serialize => serialize(params))
             ],
             expected,
         );
@@ -189,10 +182,7 @@ Deno.test("compileTemplateFragment – variable", () => {
         assertEquals(
             [
                 bases,
-                expressions
-                    .filter(x => x.type === Expression.Variable)
-                    .map(x => x as ExpressionType<Expression.Variable>)
-                    .map(({ serialize }) => serialize(params))
+                expressions.map(serialize => serialize(params))
             ],
             expected,
         );
@@ -245,10 +235,7 @@ Deno.test("compileTemplateFragment – variable calleble", () => {
         assertEquals(
             [
                 bases,
-                expressions
-                    .filter(x => x.type === Expression.CallableVariable)
-                    .map(x => x as ExpressionType<Expression.CallableVariable>)
-                    .map(({ serialize }) => serialize(params))
+                expressions.map(serialize => serialize(params))
             ],
             expected,
         );

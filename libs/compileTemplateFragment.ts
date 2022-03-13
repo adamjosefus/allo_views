@@ -1,4 +1,4 @@
-import { Expression, type ExpressionType } from "./expressionTypes.ts";
+import { type ExpressionSerializeCallback } from "./expressionTypes.ts";
 
 const tagParser = /\{\{((?<name>\w+)|(\=(?<stringQuote>["']?)(?<inline>.+)\4))(?<callable>\((?<callableArgs>.*)\))?(?<filters>(\|\w+(\:.+)*)*)?\}\}/g;
 
@@ -30,26 +30,23 @@ function generateJavascriptVariables(params: Record<string, unknown>): string {
 }
 
 
-function createStringExpression(inline: string, quoteMark: string): ExpressionType<Expression.Inline> {
+function createStringExpression(inline: string, quoteMark: string): ExpressionSerializeCallback {
     const serialize = () => {
         return eval.apply(null, [`${quoteMark}${inline}${quoteMark}`]);
     }
 
-    return {
-        type: Expression.Inline,
-        serialize: (_params) => {
-            // TODO: Throw error or something
-            try {
-                return serialize();
-            } catch (_error) {
-                return null;
-            }
+    return (_params) => {
+        // TODO: Throw error or something
+        try {
+            return serialize();
+        } catch (_error) {
+            return null;
         }
     };
 }
 
 
-function createInlineExpression(inline: string): ExpressionType<Expression.Inline> {
+function createInlineExpression(inline: string): ExpressionSerializeCallback {
     const serialize = (params: Record<string, unknown>) => {
         const script = `(() => {
             ${generateJavascriptVariables(params)}
@@ -59,21 +56,18 @@ function createInlineExpression(inline: string): ExpressionType<Expression.Inlin
         return eval.apply(null, [script]);
     }
 
-    return {
-        type: Expression.Inline,
-        serialize: (params) => {
-            // TODO: Throw error or something
-            try {
-                return serialize(params);
-            } catch (_error) {
-                return null;
-            }
+    return (params) => {
+        // TODO: Throw error or something
+        try {
+            return serialize(params);
+        } catch (_error) {
+            return null;
         }
     };
 }
 
 
-function createVariableExpression(name: string): ExpressionType<Expression.Variable> {
+function createVariableExpression(name: string): ExpressionSerializeCallback {
     const serialize = (params: Record<string, unknown>) => {
         const paramStore = new Map(Object.entries(params));
         if (!paramStore.has(name)) throw new Error(`Missing parameter: ${name}`);
@@ -81,21 +75,18 @@ function createVariableExpression(name: string): ExpressionType<Expression.Varia
         return paramStore.get(name)!;
     }
 
-    return {
-        type: Expression.Variable,
-        serialize: (params) => {
-            // TODO: Throw error or something
-            try {
-                return serialize(params);
-            } catch (_error) {
-                return null;
-            }
+    return (params) => {
+        // TODO: Throw error or something
+        try {
+            return serialize(params);
+        } catch (_error) {
+            return null;
         }
     };
 }
 
 
-function createFunctionExpression(name: string, rawArgs: string | null): ExpressionType<Expression.CallableVariable> {
+function createFunctionExpression(name: string, rawArgs: string | null): ExpressionSerializeCallback {
     const serialize = (params: Record<string, unknown>) => {
         const paramStore = new Map(Object.entries(params));
         if (!paramStore.has(name)) throw new Error(`Missing parameter: ${name}`);
@@ -115,27 +106,24 @@ function createFunctionExpression(name: string, rawArgs: string | null): Express
         }
     }
 
-    return {
-        type: Expression.CallableVariable,
-        serialize: (params) => {
-            // TODO: Throw error or something
-            try {
-                return serialize(params);
-            } catch (_error) {
-                return null;
-            }
+    return (params) => {
+        // TODO: Throw error or something
+        try {
+            return serialize(params);
+        } catch (_error) {
+            return null;
         }
     };
 }
 
 
 
-export function compileTemplateFragment(source: string): [bases: string[], expressions: ExpressionType[]] {
+export function compileTemplateFragment(source: string): [bases: string[], expressions: ExpressionSerializeCallback[]] {
     tagParser.lastIndex = 0;
     const regex = tagParser;
 
     const bases: string[] = [];
-    const expressions: ExpressionType[] = [];
+    const expressions: ExpressionSerializeCallback[] = [];
 
     const previous = {
         start: 0,
@@ -150,7 +138,7 @@ export function compileTemplateFragment(source: string): [bases: string[], expre
         const { name, stringQuote, inline, callable, callableArgs, filters } = match.groups ?? {} as Record<string, string | null | undefined>;
 
         // Set tag
-        const tag = ((): ExpressionType => {
+        const tag = ((): ExpressionSerializeCallback => {
             // Inline force string value
             if (inline && stringQuote) return createStringExpression(inline, stringQuote);
 
