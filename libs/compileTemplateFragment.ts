@@ -45,7 +45,7 @@ function createStringSerializer(rawString: string, quoteMark: string): Expressio
 
 
 function createExpressionSerializer(expression: string): ExpressionSerializeCallback {
-    const serialize = (params: Record<string, unknown>) => {
+    return (params: Record<string, unknown>) => {
         const script = `(() => {
             ${generateJavascriptVariablesCode(params)}
             return ${expression};
@@ -53,43 +53,25 @@ function createExpressionSerializer(expression: string): ExpressionSerializeCall
 
         return eval.apply(null, [script]);
     }
-
-    return (params) => {
-        // TODO: Throw error or something
-        try {
-            return serialize(params);
-        } catch (_error) {
-            return null;
-        }
-    };
 }
 
 
 function createVariableSerializer(paramName: string): ExpressionSerializeCallback {
-    const serialize = (params: Record<string, unknown>) => {
+    return (params: Record<string, unknown>) => {
         const paramStore = new Map(Object.entries(params));
         if (!paramStore.has(paramName)) throw new Error(`Missing parameter: ${paramName}`);
 
         return paramStore.get(paramName)!;
     }
-
-    return (params) => {
-        // TODO: Throw error or something
-        try {
-            return serialize(params);
-        } catch (_error) {
-            return null;
-        }
-    };
 }
 
 
-function createFunctionSerializer(name: string, rawArgs: string | null): ExpressionSerializeCallback {
-    const serialize = (params: Record<string, unknown>) => {
+function createFunctionSerializer(paramName: string, rawArgs: string | null): ExpressionSerializeCallback {
+    return (params: Record<string, unknown>) => {
         const paramStore = new Map(Object.entries(params));
-        if (!paramStore.has(name)) throw new Error(`Missing parameter: ${name}`);
+        if (!paramStore.has(paramName)) throw new Error(`Missing parameter: ${paramName}`);
 
-        const fce = paramStore.get(name) as (...args: unknown[]) => unknown;
+        const fce = paramStore.get(paramName) as (...args: unknown[]) => unknown;
 
         if (rawArgs === null) {
             return fce();
@@ -103,18 +85,7 @@ function createFunctionSerializer(name: string, rawArgs: string | null): Express
             return fce(...args);
         }
     }
-
-    return (params) => {
-        // TODO: Throw error or something
-        try {
-            return serialize(params);
-        } catch (_error) {
-            return null;
-        }
-    };
 }
-
-
 
 
 export function compileTemplateFragment(source: string): [bases: string[], expressions: ExpressionSerializeCallback[]] {
@@ -137,7 +108,7 @@ export function compileTemplateFragment(source: string): [bases: string[], expre
         const { name, stringQuote, inline, callable, callableArgs, filters } = match.groups ?? {} as Record<string, string | null | undefined>;
 
         // Set tag
-        const expr = ((): ExpressionSerializeCallback => {
+        const exprSerialize = ((): ExpressionSerializeCallback => {
             // Inline force string value
             if (inline && stringQuote) return createStringSerializer(inline, stringQuote);
 
@@ -153,7 +124,16 @@ export function compileTemplateFragment(source: string): [bases: string[], expre
             throw new Error("Unknown tag type");
         })();
 
-        expressions.push(expr);
+        expressions.push(params => {
+            try {
+                return exprSerialize(params);;
+            } catch (_error) {
+                // TODO: Throw error or something
+                console.log("Expression serialize error:", _error);
+                
+                return null;
+            }
+        });
 
         // Set base
         const base = source.substring(previous.end, start);
