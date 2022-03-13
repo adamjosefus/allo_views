@@ -12,6 +12,24 @@ function evalEscape(v: unknown): string {
 }
 
 
+function generateJavascriptVariables(params: Record<string, unknown>): string {
+    const paramArr = Object.entries(params);
+
+    const variables = paramArr.filter(([_name, value]) => {
+        return typeof value !== 'function';
+    });
+
+    const functions = paramArr.filter(([_name, value]) => {
+        return typeof value === 'function';
+    }) as [string, (...args: unknown[]) => unknown][];
+
+
+    return [...variables, ...functions]
+        .map(([name, value]) => `const ${name} = ${evalEscape(value)};`)
+        .join('\n');
+}
+
+
 function createStringExpression(inline: string, quoteMark: string): ExpressionType<Expression.Inline> {
     const serialize = () => {
         return eval.apply(null, [`${quoteMark}${inline}${quoteMark}`]);
@@ -33,24 +51,10 @@ function createStringExpression(inline: string, quoteMark: string): ExpressionTy
 
 function createInlineExpression(inline: string): ExpressionType<Expression.Inline> {
     const serialize = (params: Record<string, unknown>) => {
-        const paramArr = Object.entries(params);
-
-        const paramVariableArr = paramArr.filter(([_name, value]) => {
-            return typeof value !== 'function';
-        });
-
-        const paramFunctionArr = paramArr.filter(([_name, value]) => {
-            return typeof value === 'function';
-        }) as [string, (...args: unknown[]) => unknown][];
-
-
-        const script = [
-            `(() => {`,
-            ...paramVariableArr.map(([name, value]) => `const ${name} = ${evalEscape(value)};`),
-            ...paramFunctionArr.map(([name, value]) => `const ${name} = ${evalEscape(value)};`),
-            `return ${inline};`,
-            `})()`,
-        ].join('\n');
+        const script = `(() => {
+            ${generateJavascriptVariables(params)}
+            return ${inline};
+        })();`;
 
         return eval.apply(null, [script]);
     }
@@ -73,7 +77,7 @@ function createVariableExpression(name: string): ExpressionType<Expression.Varia
     const serialize = (params: Record<string, unknown>) => {
         const paramStore = new Map(Object.entries(params));
         if (!paramStore.has(name)) throw new Error(`Missing parameter: ${name}`);
-        
+
         return paramStore.get(name)!;
     }
 
@@ -91,13 +95,24 @@ function createVariableExpression(name: string): ExpressionType<Expression.Varia
 }
 
 
-function createFunctionExpression(name: string): ExpressionType<Expression.CallableVariable> {
+function createFunctionExpression(name: string, rawArgs: string | null): ExpressionType<Expression.CallableVariable> {
     const serialize = (params: Record<string, unknown>) => {
         const paramStore = new Map(Object.entries(params));
         if (!paramStore.has(name)) throw new Error(`Missing parameter: ${name}`);
 
-        const fce = paramStore.get(name) as (...args: unknown[]) => unknown;        
-        return fce();
+        const fce = paramStore.get(name) as (...args: unknown[]) => unknown;
+
+        if (rawArgs === null) {
+            return fce();
+        } else {
+            const script = `(() => {
+                ${generateJavascriptVariables(params)}
+                return [${rawArgs}];
+            })();`;
+
+            const args = eval.apply(null, [script]) as unknown[];
+            return fce(...args);
+        }
     }
 
     return {
@@ -133,7 +148,7 @@ export function compileTemplateFragment(source: string): [bases: string[], expre
         const end = regex.lastIndex!;
 
         const { name, stringQuote, inline, callable, callableArgs, filters } = match.groups ?? {} as Record<string, string | null | undefined>;
-        
+
         // console.log({ name, stringQuote, inline, callable, callableArgs, filters });
 
         // Set tag
@@ -145,7 +160,7 @@ export function compileTemplateFragment(source: string): [bases: string[], expre
             if (inline) return createInlineExpression(inline);
 
             // Variable callable
-            if (name && callable) return createFunctionExpression(name);
+            if (name && callable) return createFunctionExpression(name, callableArgs ?? null);
 
             // Variable
             if (name) return createVariableExpression(name);
