@@ -203,6 +203,7 @@ Deno.test("compileTemplateFragment – variable", () => {
 Deno.test("compileTemplateFragment – variable calleble", () => {
     const params: Record<string, unknown> = {
         "fce1": () => "Function 1",
+        "foo": "foo",
         "upper": (s?: string) => (s ?? '').toUpperCase(),
     }
 
@@ -226,6 +227,13 @@ Deno.test("compileTemplateFragment – variable calleble", () => {
             expected: [
                 ["Before ", " After"],
                 ["AHOJ"],
+            ],
+        },
+        {
+            source: `Before {{upper(foo)}} After`,
+            expected: [
+                ["Before ", " After"],
+                ["FOO"],
             ],
         },
     ];
