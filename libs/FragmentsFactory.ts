@@ -4,6 +4,7 @@
 
 import { EscapeContext } from "./contexts/EscapeContext.ts";
 import { type FragmentType } from "./FragmentType.ts";
+import { range } from "./helpers/range.ts";
 
 
 // type SliceType = {
@@ -68,7 +69,8 @@ export class FragmentsFactory {
         const jsSlices = getSlices(sourceContent, [...sliceIndexes]);
 
         const length = Math.max(htmlSlices.length, jsSlices.length);
-        return Array(length).map((_blank, i) => {
+        
+        return Array(length).fill(null).map((_blank, i) => {
             const html: string | null = htmlSlices[i] ?? null;
             const js: string | null = jsSlices[i] ?? null;
 
