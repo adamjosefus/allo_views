@@ -1,5 +1,6 @@
 import { join, isAbsolute } from "https://deno.land/std@0.128.0/path/mod.ts";
 import { Cache } from "https://deno.land/x/allo_caching@v1.2.0/mod.ts";
+import { compileTemplateFragment } from "./compileTemplateFragment.ts";
 import { FragmentsFactory } from "./FragmentsFactory.ts";
 import { FragmentType } from "./FragmentType.ts";
 
@@ -38,7 +39,18 @@ export class Template {
 
 
     render(params: Record<string, unknown>): string {
-        // this.#fragments.map()
-        return this.#sourceContent;
+        const s = this.#fragments.map(fr => {
+            const [bases, expressions] = compileTemplateFragment(fr.sourceContent);
+
+            const blankSerializer = (_params: Record<string, unknown>) => "";
+            return bases.reduce((acc: string[], base, i) => {
+                const serializer = expressions[i] ?? blankSerializer;
+                const expressionValue = serializer(params);
+
+                return [...acc, base, `${expressionValue}`];
+            }, []);
+        }).flat().join('');
+
+        return s;
     }
 }
