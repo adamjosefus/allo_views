@@ -48,8 +48,7 @@ export class FragmentsFactory {
             }
 
             return slices;
-        };
-
+        }
 
         const getSlices = (sourceContent: string, sliceIndexes: readonly number[]): readonly string[] => {
             const arr: string[] = [];
@@ -68,8 +67,9 @@ export class FragmentsFactory {
         const htmlSlices = getSlices(sourceContent, [0, ...sliceIndexes]);
         const jsSlices = getSlices(sourceContent, [...sliceIndexes]);
 
-        return htmlSlices.map((v, i) => {
-            const html: string | null = v ?? null;
+        const length = Math.max(htmlSlices.length, jsSlices.length);
+        return Array(length).map((_blank, i) => {
+            const html: string | null = htmlSlices[i] ?? null;
             const js: string | null = jsSlices[i] ?? null;
 
             return [
