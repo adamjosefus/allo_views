@@ -6,7 +6,7 @@ import { join, isAbsolute } from "https://deno.land/std@0.128.0/path/mod.ts";
 import { Cache } from "https://deno.land/x/allo_caching@v1.2.0/mod.ts";
 import { TemplateError } from "./TemplateError.ts";
 import { EscapeContext, html, js } from "./contexts/mod.ts";
-import { FragmentsParser } from "./FragmentsParser.ts";
+import { FragmentsFactory } from "./FragmentsFactory.ts";
 import { FragmentType } from "./FragmentType.ts";
 import * as Filters from "./filters.ts";
 import { Template } from "./Template.ts";
@@ -24,12 +24,11 @@ type FilterNormalizedCallbackType = {
 }
 
 
-
 export class TemplateEngine {
 
     readonly #filters: Map<string, FilterNormalizedCallbackType> = new Map();
     readonly #fragmentsCache = new Cache<FragmentType[]>();
-    readonly #fragmentsParser = new FragmentsParser();
+    readonly #fragmentsFactory = new FragmentsFactory();
 
     constructor() {
         this.#addNormalizedFilter('noescape', Filters.noescape);
