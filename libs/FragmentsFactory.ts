@@ -29,60 +29,61 @@ export class FragmentsFactory {
     }
 
 
-    #createFromHtmlOrigin(source: string): FragmentType[] {
+    #createFromHtmlOrigin(sourceContent: string): FragmentType[] {
         type SliceType = {
             start: number,
             end: number,
             content: string,
         }
 
-        const computeJsSlices = (source: string): readonly SliceType[] => {
-            const slices: SliceType[] = [];
+
+        const computeSliceIndexes = (sourceContent: string): readonly number[] => {
+            const slices: number[] = [];
 
             const parser = this.#scriptTagParser;
             parser.lastIndex = 0;
 
-            let result: RegExpExecArray | null = null
-            while ((result = parser.exec(source)) !== null) {
-                const { openTag, content, closeTag } = result.groups as Record<string, string>;
+            let match: RegExpExecArray | null = null
+            while ((match = parser.exec(sourceContent)) !== null) {
+                const { openTag, content, closeTag } = match.groups as Record<string, string>;
                 const offset = parser.lastIndex - (openTag.length + content.length + closeTag.length);
 
                 const start = offset + openTag.length;
                 const end = start + content.length;
 
-                slices.push({ start, end, content });
+                slices.push(start, end);
             }
 
             return slices;
-        }
+        };
 
-        const computeHtmlSlices = (source: string, slicePoints: number[]): readonly SliceType[] => {
-            const slices: SliceType[] = [];
 
-            for (let i = 0; i < slicePoints.length; i += 2) {
-                const start = slicePoints[i];
-                const end = slicePoints[i + 1];
+        const getSlices = (sourceContent: string, sliceIndexes: readonly number[]): readonly string[] => {
+            const arr: string[] = [];
 
-                const content = source.substring(start, end);
+            for (let i = 0; i < sliceIndexes.length; i += 2) {
+                const [start, end] = sliceIndexes.slice(i, i + 1);
+                const slice = sourceContent.slice(start, end);
 
-                slices.push({ start, end, content });
+                arr.push(slice);
             }
 
-            return slices;
+            return arr;
         }
 
-        const jsSlices = computeJsSlices(source);
-        const htmlSlices = computeHtmlSlices(source, [0, ...jsSlices.map(s => [s.start, s.end]).flat()]);
+        const sliceIndexes = computeSliceIndexes(sourceContent);
+        const htmlSlices = getSlices(sourceContent, [0, ...sliceIndexes]);
+        const jsSlices = getSlices(sourceContent, [...sliceIndexes]);
 
-        return htmlSlices.reduce((fragments: FragmentType[], htmlSlice, i) => {
-            const jsSlice = jsSlices[i];
+        return htmlSlices.map((v, i) => {
+            const html: string | null = v ?? null;
+            const js: string | null = jsSlices[i] ?? null;
 
             return [
-                fragments,
-                htmlSlice ? this.#createHtmlFragments(htmlSlice.content) : [],
-                jsSlice ? this.#createJsFragments(jsSlice.content) : [],
+                html ? this.#createHtmlFragments(html) : [],
+                js ? this.#createJsFragments(js) : [],
             ].flat();
-        }, []);
+        }).flat();
     }
 
 
