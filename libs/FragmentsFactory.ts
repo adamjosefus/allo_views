@@ -30,13 +30,6 @@ export class FragmentsFactory {
 
 
     #createFromHtmlOrigin(sourceContent: string): FragmentType[] {
-        type SliceType = {
-            start: number,
-            end: number,
-            content: string,
-        }
-
-
         const computeSliceIndexes = (sourceContent: string): readonly number[] => {
             const slices: number[] = [];
 
