@@ -16,7 +16,7 @@ const engine = new TemplateEngine();
 const router = new RouterList();
 router.add("", (_req: Request, _params: Record<string, string>) => {
     const templatePath = join(templateDir, "page.html");
-    const s = engine.render(templatePath, { foo: "Foo!" });
+    const s = engine.render(templatePath, { foo: "<b>Foo!</b>" });
 
     return new Response(s);
 });
