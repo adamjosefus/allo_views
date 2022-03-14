@@ -38,7 +38,7 @@ export class Template {
 
 
     render(params: Record<string, unknown>): string {
-        this.#fragments.map()
+        // this.#fragments.map()
         return this.#sourceContent;
     }
 }
