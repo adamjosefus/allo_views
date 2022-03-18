@@ -1,27 +1,23 @@
-import { type ExpressionSerializeCallback } from "./ExpressionSerializeCallback.ts";
+import { type ExpressionType } from "./fragments/ExpressionType.ts";
+import { type FragmentContentArrayType } from "./fragments/FragmentContentArrayType.ts";
 import { generateJavascriptVariablesCode } from "./helpers/generateJavascriptVariablesCode.ts";
+import { type ParamsType } from "./ParamsType.ts";
 
 const expressionParser = /\{\{((?<name>\w+)|(\=(?<stringQuote>["']?)(?<inline>.+)\4))(?<callable>\((?<callableArgs>.*)\))?(?<filters>(\|\w+(\:.+)*)*)?\}\}/g;
 
 
-function createStringSerializer(rawString: string, quoteMark: string): ExpressionSerializeCallback {
-    const serialize = () => {
+type SerializeCallback = (params: ParamsType) => unknown;
+
+
+const createStringSerializeCallback = (rawString: string, quoteMark: string): SerializeCallback => {
+    return _params => {
         return eval.apply(null, [`${quoteMark}${rawString}${quoteMark}`]);
     }
-
-    return (_params) => {
-        // TODO: Throw error or something
-        try {
-            return serialize();
-        } catch (_error) {
-            return null;
-        }
-    };
 }
 
 
-function createExpressionSerializer(expression: string): ExpressionSerializeCallback {
-    return (params: Record<string, unknown>) => {
+const createExpressionSerializeCallback = (expression: string): SerializeCallback => {
+    return params => {
         const script = `(() => {
             ${generateJavascriptVariablesCode(params)}
             return ${expression};
@@ -32,8 +28,8 @@ function createExpressionSerializer(expression: string): ExpressionSerializeCall
 }
 
 
-function createVariableSerializer(paramName: string): ExpressionSerializeCallback {
-    return (params: Record<string, unknown>) => {
+const createVariableSerializeCallback = (paramName: string): SerializeCallback => {
+    return params => {
         const paramStore = new Map(Object.entries(params));
         if (!paramStore.has(paramName)) throw new Error(`Missing parameter: ${paramName}`);
 
@@ -42,8 +38,8 @@ function createVariableSerializer(paramName: string): ExpressionSerializeCallbac
 }
 
 
-function createFunctionSerializer(paramName: string, rawArgs: string | null): ExpressionSerializeCallback {
-    return (params: Record<string, unknown>) => {
+const createFunctionSerializeCallback = (paramName: string, rawArgs: string | null): SerializeCallback => {
+    return params => {
         const paramStore = new Map(Object.entries(params));
         if (!paramStore.has(paramName)) throw new Error(`Missing parameter: ${paramName}`);
 
@@ -64,12 +60,12 @@ function createFunctionSerializer(paramName: string, rawArgs: string | null): Ex
 }
 
 
-export function compileTemplateFragment(source: string): [bases: string[], expressions: ExpressionSerializeCallback[]] {
+export function createFragmentContentArray(source: string): FragmentContentArrayType {
     expressionParser.lastIndex = 0;
     const regex = expressionParser;
 
     const bases: string[] = [];
-    const expressions: ExpressionSerializeCallback[] = [];
+    const expressions: ExpressionType[] = [];
 
     const previous = {
         start: 0,
@@ -81,33 +77,33 @@ export function compileTemplateFragment(source: string): [bases: string[], expre
         const start = match.index!;
         const end = regex.lastIndex!;
 
-        const { name, stringQuote, inline, callable, callableArgs, filters } = match.groups ?? {} as Record<string, string | null | undefined>;
+        const { name, stringQuote, inline, callable, callableArgs, _filters } = match.groups ?? {} as Record<string, string | null | undefined>;
 
         // Set tag
-        const exprSerialize = ((): ExpressionSerializeCallback => {
+        const serializeCallback = ((): SerializeCallback => {
             // Inline force string value
-            if (inline && stringQuote) return createStringSerializer(inline, stringQuote);
+            if (inline && stringQuote) return createStringSerializeCallback(inline, stringQuote);
 
             // Inline value
-            if (inline) return createExpressionSerializer(inline);
+            if (inline) return createExpressionSerializeCallback(inline);
 
             // Variable callable
-            if (name && callable) return createFunctionSerializer(name, callableArgs ?? null);
+            if (name && callable) return createFunctionSerializeCallback(name, callableArgs ?? null);
 
             // Variable
-            if (name) return createVariableSerializer(name);
+            if (name) return createVariableSerializeCallback(name);
 
             throw new Error("Unknown tag type");
         })();
 
-        expressions.push(params => {
-            try {
-                return exprSerialize(params);
-            } catch (_error) {
-                // TODO: Throw error or something
-                console.log("Expression serialize error:", _error);
-                
-                return null;
+        expressions.push({
+            serialize: (params) => {
+                try {
+                    return serializeCallback(params);
+                } catch (err) {
+                    console.log("Expression serialize error:", err);
+                    return null;
+                }
             }
         });
 
