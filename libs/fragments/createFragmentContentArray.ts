@@ -1,12 +1,12 @@
-import { type ExpressionType } from "./fragments/ExpressionType.ts";
-import { type FragmentContentArrayType } from "./fragments/FragmentContentArrayType.ts";
-import { generateJavascriptVariablesCode } from "./helpers/generateJavascriptVariablesCode.ts";
-import { type ParamsType } from "./ParamsType.ts";
-
-const expressionParser = /\{\{((?<name>\w+)|(\=(?<stringQuote>["']?)(?<inline>.+)\4))(?<callable>\((?<callableArgs>.*)\))?(?<filters>(\|\w+(\:.+)*)*)?\}\}/g;
-
+import { type ExpressionType } from "./ExpressionType.ts";
+import { type FragmentContentArrayType } from "./FragmentContentArrayType.ts";
+import { generateJavascriptVariablesCode } from "../helpers/generateJavascriptVariablesCode.ts";
+import { type ParamsType } from "../ParamsType.ts";
 
 type SerializeCallback = (params: ParamsType) => unknown;
+
+
+const expressionParser = /\{\{((?<name>\w+)|(\=(?<stringQuote>["']?)(?<inline>.+)\4))(?<callable>\((?<callableArgs>.*)\))?(?<filters>(\|\w+(\:.+)*)*)?\}\}/g;
 
 
 const createStringSerializeCallback = (rawString: string, quoteMark: string): SerializeCallback => {
