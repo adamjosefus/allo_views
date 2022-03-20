@@ -6,8 +6,8 @@
  * @internal
  */
 export const enum EscapeContext {
-    Text = 'text',
+    TextContent = 'text-content',
     HtmlContent = 'html-content',
-    ScriptContent = 'script-content',
-    ScriptComment = 'script-comment',
+    JsContent = 'script-content',
+    JsComment = 'script-comment',
 }
