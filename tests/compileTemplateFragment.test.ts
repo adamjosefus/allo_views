@@ -1,4 +1,4 @@
-import { assertEquals } from "https://deno.land/std@0.128.0/testing/asserts.ts";
+import { assertEquals } from "https://deno.land/std@0.132.0/testing/asserts.ts";
 import { compileTemplateFragment } from "../libs/compileTemplateFragment.ts";
 
 

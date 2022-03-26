@@ -1,4 +1,4 @@
-import { join, isAbsolute } from "https://deno.land/std@0.128.0/path/mod.ts";
+import { join, isAbsolute } from "https://deno.land/std@0.132.0/path/mod.ts";
 import { Cache } from "https://deno.land/x/allo_caching@v1.2.0/mod.ts";
 import { compileTemplateFragment } from "./compileTemplateFragment.ts";
 import { FragmentsFactory } from "./FragmentsFactory.ts";

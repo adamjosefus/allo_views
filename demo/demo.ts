@@ -1,4 +1,4 @@
-import { fromFileUrl, dirname, join } from "https://deno.land/std@0.129.0/path/mod.ts";
+import { fromFileUrl, dirname, join } from "https://deno.land/std@0.132.0/path/mod.ts";
 import { RouterList } from "https://deno.land/x/allo_routing@v1.1.4/mod.ts";
 import { Server } from "https://deno.land/x/allo_server@v1.0.1/mod.ts";
 import { TemplateEngine } from "../mod.ts";
