@@ -1,4 +1,4 @@
-import { type ParamsType } from "../ParamsType.ts";
+import { type ParamsType } from "./ParamsType.ts";
 
 
 /**

@@ -2,10 +2,10 @@
  * @copyright Copyright (c) 2022 Adam Josefus
  */
 
-import { Context, type ContextTag } from "./Context.ts";
+import { ContextContent, type ContextContentTag } from "./ContextContent.ts";
 
 
-export class JsContentContext extends Context {
+export class JsContextContent extends ContextContent {
     
     escape(s: unknown): string {
         return JSON.stringify(s, null, 4);
@@ -22,7 +22,7 @@ export class JsContentContext extends Context {
             if (this.values[i] !== undefined) {
                 const value = this.values[i];
 
-                if (value instanceof JsContentContext) {
+                if (value instanceof JsContextContent) {
                     acc.push(value.toString());
                 } else {
                     acc.push(this.escape(value));
@@ -35,6 +35,6 @@ export class JsContentContext extends Context {
 }
 
 
-export const js: ContextTag = (contents: TemplateStringsArray, ...expressions: unknown[]) => {
-    return new JsContentContext([...contents], expressions);
+export const js: ContextContentTag = (contents: TemplateStringsArray, ...expressions: unknown[]) => {
+    return new JsContextContent([...contents], expressions);
 }

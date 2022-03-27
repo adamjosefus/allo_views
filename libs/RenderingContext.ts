@@ -5,7 +5,7 @@
 /**
  * @internal
  */
-export const enum EscapeContext {
+export const enum RenderingContext {
     TextContent = 'text-content',
     HtmlContent = 'html-content',
     JsContent = 'script-content',

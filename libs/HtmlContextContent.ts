@@ -2,10 +2,10 @@
  * @copyright Copyright (c) 2022 Adam Josefus
  */
 
-import { Context, type ContextTag } from "./Context.ts";
+import { ContextContent, type ContextContentTag } from "./ContextContent.ts";
 
 
-export class HtmlContentContext extends Context {
+export class HtmlContextContent extends ContextContent {
 
     #regex = {
         specialChars: /[&<>"']/g,
@@ -42,7 +42,7 @@ export class HtmlContentContext extends Context {
             if (this.values[i] !== undefined) {
                 const value = this.values[i];
 
-                if (value instanceof HtmlContentContext) {
+                if (value instanceof HtmlContextContent) {
                     acc.push(value.toString());
                 } else {
                     acc.push(this.escape(value));
@@ -55,6 +55,6 @@ export class HtmlContentContext extends Context {
 }
 
 
-export const html: ContextTag = (contents: TemplateStringsArray, ...expressions: unknown[]) => {
-    return new HtmlContentContext([...contents], expressions);
+export const html: ContextContentTag = (contents: TemplateStringsArray, ...expressions: unknown[]) => {
+    return new HtmlContextContent([...contents], expressions);
 }

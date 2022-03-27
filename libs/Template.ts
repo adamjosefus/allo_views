@@ -1,56 +1,64 @@
 import { join, isAbsolute } from "https://deno.land/std@0.132.0/path/mod.ts";
 import { Cache } from "https://deno.land/x/allo_caching@v1.2.0/mod.ts";
-import { compileTemplateFragment } from "./compileTemplateFragment.ts";
-import { FragmentsFactory } from "./FragmentsFactory.ts";
-import { FragmentType } from "./FragmentType.ts";
+import { RenderingContext } from "./RenderingContext.ts";
+import { type ContextFragmentFactory } from "./ContextFragmentFactory.ts";
+import { ParamsType } from "./ParamsType.ts";
+import { ExpressionsParser } from "./ExpressionsParser.ts";
+import { renderFragmentContent } from "./renderFragmentContent.ts";
+
+
+/**
+ * @internal
+ */
+export type SourceFragmentType = {
+    escapeContext: RenderingContext,
+    sourceText: string,
+}
 
 
 export class Template {
-    // Properties
+
     readonly #path: string;
+    readonly #fragmentFactory: ContextFragmentFactory;
+    readonly #expressionsParser: ExpressionsParser;
 
-    // Models
-    readonly #fragmentsFactory = new FragmentsFactory();
-
-    // Caches
-    readonly #sourceContentCache = new Cache<string>();
-    readonly #fragmentsCache = new Cache<FragmentType[]>();
+    readonly #sourceCache = new Cache<string>()
 
 
-    constructor(path: string) {
+    constructor(path: string, fragmentFactory: ContextFragmentFactory, expressionsParser: ExpressionsParser) {
         this.#path = isAbsolute(path) ? path : join(Deno.cwd(), path);
+        this.#fragmentFactory = fragmentFactory;
+        this.#expressionsParser = expressionsParser;
     }
 
 
-    get #sourceContent(): string {
-        const file = this.#path;
-        return this.#sourceContentCache.load(file, () => {
-            return Deno.readTextFileSync(file);
-        }, { files: [file] });
+    #getSource(): string {
+        return this.#sourceCache.load(this.#path, () => {
+            return Deno.readTextFileSync(this.#path);
+        }, {
+            files: [this.#path]
+        });
     }
 
 
-    get #fragments(): FragmentType[] {
-        const file = this.#path;
-        return this.#fragmentsCache.load(file, () => {
-            return this.#fragmentsFactory.create(this.#sourceContent);
-        }, { files: [file] });
+    render(params: ParamsType): string {
+        // TODO: Add Cache
+        return this.#render(params);
     }
 
 
-    render(params: Record<string, unknown>): string {
-        const s = this.#fragments.map(fr => {
-            const [bases, expressions] = compileTemplateFragment(fr.sourceContent);
+    #render(params: ParamsType): string {
+        const fragments = this.#fragmentFactory.create(this.#getSource());
 
-            const blankSerializer = (_params: Record<string, unknown>) => "";
-            return bases.reduce((acc: string[], base, i) => {
-                const serializer = expressions[i] ?? blankSerializer;
-                const expressionValue = serializer(params);
+        const result = fragments.reduce((acc: string[], fragment) => {
 
-                return [...acc, base, `${expressionValue}`];
-            }, []);
-        }).flat().join('');
+            const [bases, expressions] = this.#expressionsParser.parse(fragment.sourceContent);
 
-        return s;
+            acc.push(renderFragmentContent(bases, expressions, params));
+
+            return acc;
+        }, []).join('');
+
+        return result;
     }
 }

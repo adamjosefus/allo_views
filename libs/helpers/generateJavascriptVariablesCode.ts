@@ -1,5 +1,6 @@
 /**
  * @internal
+ * TODO: Rename
  */
 export function generateJavascriptVariablesCode(params: Record<string, unknown>): string {
     function escape(v: unknown): string {

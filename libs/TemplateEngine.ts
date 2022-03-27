@@ -2,14 +2,12 @@
  * @copyright Copyright (c) 2022 Adam Josefus
  */
 
-import { join, isAbsolute } from "https://deno.land/std@0.128.0/path/mod.ts";
-import { Cache } from "https://deno.land/x/allo_caching@v1.2.0/mod.ts";
+import { TemplateFactory } from "./TemplateFactory.ts";
 import { TemplateError } from "./TemplateError.ts";
-import { EscapeContext, html, js } from "./contexts/mod.ts";
-import { FragmentsFactory } from "./FragmentsFactory.ts";
-import { FragmentType } from "./FragmentType.ts";
+import { RenderingContext } from "./RenderingContext.ts";
 import * as Filters from "./filters.ts";
-import { Template } from "./Template.ts";
+import { type Template } from "./Template.ts";
+import { Cache } from "https://deno.land/x/allo_caching@v1.2.0/mod.ts";
 
 
 
@@ -20,17 +18,21 @@ export type FilterCallbackType = {
 
 type FilterNormalizedCallbackType = {
     // deno-lint-ignore no-explicit-any
-    (context: EscapeContext, ...args: any[]): any;
+    (context: RenderingContext, ...args: any[]): any;
 }
 
 
 export class TemplateEngine {
 
+    readonly #templateCache = new Cache<Template>()
+
+    readonly #templateFactory: TemplateFactory;
     readonly #filters: Map<string, FilterNormalizedCallbackType> = new Map();
-    readonly #fragmentsCache = new Cache<FragmentType[]>();
-    readonly #fragmentsFactory = new FragmentsFactory();
+
 
     constructor() {
+        this.#templateFactory = new TemplateFactory()
+
         this.#addNormalizedFilter('noescape', Filters.noescape);
         this.#addNormalizedFilter('json', Filters.json);
         this.#addNormalizedFilter('markdown', Filters.markdown);
@@ -67,14 +69,14 @@ export class TemplateEngine {
 
 
     /**
-     * 
      * @param path File path to template.
      * @param params Parameters to render.
      * @returns Rendered template.
      */
     render(path: string, params: Record<string, unknown> = {}): string {
-        // TODO: Add cache.
-        const template = new Template(path)
+        const template = this.#templateCache.load(path, () => {
+            return this.#templateFactory.create(path);
+        });
 
         return template.render(params);
     }
