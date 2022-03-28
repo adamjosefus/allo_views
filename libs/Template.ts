@@ -36,17 +36,17 @@ export class Template {
 
 
     render(params: ParamsType): string {
-        const renderCallback = this.renderCallbackCache.load(this.#path, () => {
-            return this.#createRenderer();
-        }, {
+        const callback = this.renderCallbackCache.load(
+            this.#path,
+            () => this.#createRenderCallback(), {
             files: [this.#path],
         });
 
-        return renderCallback(params);
+        return callback(params);
     }
 
 
-    #createRenderer(): (params: ParamsType) => string {
+    #createRenderCallback(): (params: ParamsType) => string {
         const source = Deno.readTextFileSync(this.#path)
 
         return (params: ParamsType) => {
