@@ -48,10 +48,9 @@ export class Template {
 
 
     #render(params: ParamsType): string {
-        const fragments = this.#fragmentFactory.create(this.#getSource());
+        const fragments = this.#fragmentFactory.create(this.#getSource());        
 
         const result = fragments.reduce((acc: string[], fragment) => {
-
             const [bases, expressions] = this.#expressionsParser.parse(fragment.sourceContent);
 
             acc.push(renderFragmentContent(bases, expressions, params));

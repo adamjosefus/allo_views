@@ -106,7 +106,6 @@ export class HtmlDocumentContextFragmentFactory implements IContextFragmentFacto
             sourceContent: source.substring(previous.end)
         });
 
-
         // Join item with same type
         return snippets.reduce((acc: ContextFragmentType[], curr) => {
             const prev = acc.at(-1)

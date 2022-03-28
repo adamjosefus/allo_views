@@ -11,8 +11,6 @@ export class TemplateFactory {
 
     create(path: string): Template {
         const template = new Template(path, this.#fragmentFactory, this.#expressionsParser);
-
         return template;
     }
-
 }

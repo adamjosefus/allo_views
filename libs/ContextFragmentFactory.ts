@@ -14,6 +14,7 @@ export class ContextFragmentFactory {
     htmlDocumentFragmentFactory = new HtmlDocumentContextFragmentFactory();
 
     create(source: string): ContextFragmentType[] {
+        // TODO: Detect main type of fragment (html, js, json, xml, plaintext, ...)
         const fragments = this.#createFromHtmlDocument(source);
 
         return fragments;
@@ -21,7 +22,6 @@ export class ContextFragmentFactory {
 
 
     #createFromHtmlDocument(source: string): ContextFragmentType[] {
-        // TODO: Detect main type of fragment (html, js, json, xml, plaintext, ...)
         return this.htmlDocumentFragmentFactory.create(source);
     }
 }
