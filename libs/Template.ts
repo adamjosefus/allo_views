@@ -36,9 +36,7 @@ export class Template {
 
 
     render(params: ParamsType): string {
-        const callback = this.renderCallbackCache.load(
-            this.#path,
-            () => this.#createRenderCallback(), {
+        const callback = this.renderCallbackCache.load(this.#path, () => this.#createRenderCallback(), {
             files: [this.#path],
         });
 
