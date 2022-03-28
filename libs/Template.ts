@@ -16,13 +16,16 @@ export type SourceFragmentType = {
 }
 
 
+type RenderCallback = (params: ParamsType) => string;
+
+
 export class Template {
 
     readonly #path: string;
     readonly #fragmentFactory: ContextFragmentFactory;
     readonly #expressionsParser: ExpressionsParser;
 
-    readonly #sourceCache = new Cache<string>()
+    readonly renderCallbackCache = new Cache<RenderCallback>()
 
 
     constructor(path: string, fragmentFactory: ContextFragmentFactory, expressionsParser: ExpressionsParser) {
@@ -32,32 +35,31 @@ export class Template {
     }
 
 
-    #getSource(): string {
-        return this.#sourceCache.load(this.#path, () => {
-            return Deno.readTextFileSync(this.#path);
-        }, {
-            files: [this.#path]
-        });
-    }
-
-
     render(params: ParamsType): string {
-        // TODO: Add Cache
-        return this.#render(params);
+        const renderCallback = this.renderCallbackCache.load(this.#path, () => {
+            return this.#createRenderer();
+        }, {
+            files: [this.#path],
+        });
+
+        return renderCallback(params);
     }
 
 
-    #render(params: ParamsType): string {
-        const fragments = this.#fragmentFactory.create(this.#getSource());        
+    #createRenderer(): (params: ParamsType) => string {
+        const source = Deno.readTextFileSync(this.#path)
 
-        const result = fragments.reduce((acc: string[], fragment) => {
-            const [bases, expressions] = this.#expressionsParser.parse(fragment.sourceContent);
+        return (params: ParamsType) => {
+            const fragments = this.#fragmentFactory.create(source);
 
-            acc.push(renderFragmentContent(bases, expressions, params));
+            const result = fragments.reduce((acc: string[], fragment) => {
+                const [bases, expressions] = this.#expressionsParser.parse(fragment.sourceContent);
 
-            return acc;
-        }, []).join('');
+                acc.push(renderFragmentContent(bases, expressions, params));
+                return acc;
+            }, []).join('');
 
-        return result;
+            return result;
+        }
     }
 }
