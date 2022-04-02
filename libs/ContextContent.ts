@@ -2,8 +2,6 @@
  * @copyright Copyright (c) 2022 Adam Josefus
  */
 
-import { RenderingContext } from "./RenderingContext.ts";
-
 export abstract class ContextContent {
     protected strings: readonly string[];
     protected keys: readonly unknown[];
