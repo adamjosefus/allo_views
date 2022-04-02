@@ -2,10 +2,10 @@
  * @copyright Copyright (c) 2022 Adam Josefus
  */
 
-import { ContextContent, type ContextContentTag } from "./ContextContent.ts";
+import { ContextedValue, type ContextedTag } from "./ContextedValue.ts";
 
 
-export class HtmlContextContent extends ContextContent {
+export class HtmlValue extends ContextedValue {
 
     static readonly #regex = /[&<>"']/g;
 
@@ -19,8 +19,8 @@ export class HtmlContextContent extends ContextContent {
 
 
     static escape(value: unknown): string {
-        const regex = HtmlContextContent.#regex;
-        const replacement = HtmlContextContent.#replacement;
+        const regex = HtmlValue.#regex;
+        const replacement = HtmlValue.#replacement;
 
         regex.lastIndex = 0;
         return `${value}`.replace(regex, (match) => {
@@ -34,11 +34,11 @@ export class HtmlContextContent extends ContextContent {
 
 
     render(): string {
-        return HtmlContextContent.renderInContext(HtmlContextContent, this.strings, this.keys);
+        return HtmlValue.renderInContext(HtmlValue, this.strings, this.keys);
     }
 }
 
 
-export const html: ContextContentTag = (contents: TemplateStringsArray, ...expressions: unknown[]) => {
-    return new HtmlContextContent([...contents], [...expressions]);
+export const html: ContextedTag = (contents: TemplateStringsArray, ...expressions: unknown[]) => {
+    return new HtmlValue([...contents], [...expressions]);
 }

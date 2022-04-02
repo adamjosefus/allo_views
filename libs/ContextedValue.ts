@@ -2,7 +2,7 @@
  * @copyright Copyright (c) 2022 Adam Josefus
  */
 
-export abstract class ContextContent {
+export abstract class ContextedValue {
     protected strings: readonly string[];
     protected keys: readonly unknown[];
 
@@ -12,7 +12,7 @@ export abstract class ContextContent {
     }
 
 
-    static escape(content: unknown): string {
+    static escape(value: unknown): string {
         throw new Error("Not implemented");
     }
 
@@ -20,7 +20,7 @@ export abstract class ContextContent {
     abstract render(): string;
 
 
-    static renderInContext(ContextClass: typeof ContextContent, strings: readonly string[], keys: readonly unknown[]): string {
+    static renderInContext(ContextClass: typeof ContextedValue, strings: readonly string[], keys: readonly unknown[]): string {
         return strings.reduce((acc: string[], s, i) => {
             acc.push(s);
 
@@ -39,7 +39,7 @@ export abstract class ContextContent {
 }
 
 
-export type ContextContentTag = {
+export type ContextedTag = {
     // deno-lint-ignore no-explicit-any
-    (contents: TemplateStringsArray, ...expressions: any[]): ContextContent
+    (contents: TemplateStringsArray, ...expressions: any[]): ContextedValue
 }
