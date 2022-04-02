@@ -3,7 +3,7 @@
  */
 
 import { type IDocumentBasedValueFactory } from "./IDocumentBasedValueFactory.ts";
-import { sliceString } from "./sliceString.ts";
+import { sliceString } from "./helpers/sliceString.ts";
 import {
     HtmlContextValue,
     HtmlCommentContextValue,

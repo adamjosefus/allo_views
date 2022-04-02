@@ -28,7 +28,6 @@ export class Template {
     constructor(path: string, fragmentFactory: ContextedValueFactory) {
         this.#path = isAbsolute(path) ? path : join(Deno.cwd(), path);
         this.#contextedValueFactory = fragmentFactory;
-        // this.#expressionsParser = expressionsParser;
     }
 
 
