@@ -7,54 +7,38 @@ import { ContextContent, type ContextContentTag } from "./ContextContent.ts";
 
 export class HtmlContextContent extends ContextContent {
 
-    #regex = {
-        specialChars: /[&<>"']/g,
-    }
+    static readonly #regex = /[&<>"']/g;
 
-    escape(s: unknown): string {
-        const regex = this.#regex.specialChars;
-        const replacement = new Map<string, string>([
-            ['&', '&amp;'],
-            ['<', '&lt;'],
-            ['>', '&gt;'],
-            ['"', '&quot;'],
-            ["'", '&#39;'],
-        ]);
+    static readonly #replacement = new Map<string, string>([
+        ['&', '&amp;'],
+        ['<', '&lt;'],
+        ['>', '&gt;'],
+        ['"', '&quot;'],
+        ["'", '&#39;'],
+    ]);
+
+
+    static escape(value: unknown): string {
+        const regex = HtmlContextContent.#regex;
+        const replacement = HtmlContextContent.#replacement;
 
         regex.lastIndex = 0;
-        return `${s}`.replace(regex, (match) => {
-            if (replacement.has(match)) {
-                return replacement.get(match)!;
+        return `${value}`.replace(regex, (match) => {
+            if (!replacement.has(match)) {
+                throw new Error("Unknown special character");
             }
 
-            throw new Error("Unknown special character");
+            return replacement.get(match)!;
         });
     }
 
 
-    toString(): string {
-        const acc: string[] = [];
-
-        for (let i = 0; i < this.parts.length; i++) {
-            const base = this.parts[i];
-            acc.push(base);
-
-            if (this.values[i] !== undefined) {
-                const value = this.values[i];
-
-                if (value instanceof HtmlContextContent) {
-                    acc.push(value.toString());
-                } else {
-                    acc.push(this.escape(value));
-                }
-            }
-        }
-
-        return acc.join('');
+    render(): string {
+        return HtmlContextContent.renderInContext(HtmlContextContent, this.strings, this.keys);
     }
 }
 
 
 export const html: ContextContentTag = (contents: TemplateStringsArray, ...expressions: unknown[]) => {
-    return new HtmlContextContent([...contents], expressions);
+    return new HtmlContextContent([...contents], [...expressions]);
 }
