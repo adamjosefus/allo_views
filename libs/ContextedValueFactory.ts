@@ -5,8 +5,8 @@
 import { HtmlDocumentContextedValueFactory } from "./HtmlDocumentContextedValueFactory.ts";
 import { type ContextFragmentType } from "./ContextFragmentType.ts";
 import { IDocumentBasedValueFactory } from "./IDocumentBasedValueFactory.ts";
-import { type ContextedValue } from "./ContextedValue.ts";
 import { ExpressionsParser } from "./ExpressionsParser.ts";
+import { ContextValue } from "./context-values/ContextValue.ts";
 
 
 /**
@@ -21,13 +21,13 @@ export class ContextedValueFactory implements IDocumentBasedValueFactory {
     }
 
 
-    create(source: string): ContextedValue[] {
+    create(source: string): ContextValue[] {
         // TODO: Detect main type of fragment (html, js, json, xml, plaintext, ...)
         return this.#createFromHtmlDocument(source);
     }
 
 
-    #createFromHtmlDocument(source: string): ContextedValue[] {
+    #createFromHtmlDocument(source: string): ContextValue[] {
         return this.#htmlBasedFactory.create(source);
     }
 }

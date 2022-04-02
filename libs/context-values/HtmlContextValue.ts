@@ -2,11 +2,12 @@
  * @copyright Copyright (c) 2022 Adam Josefus
  */
 
-import { ContextedValue, type ContextedTag } from "./ContextedValue.ts";
-import { ParamsType } from "./ParamsType.ts";
+import { ContextValue, type ContextTagType } from "./ContextValue.ts";
+import { ParamsType } from "../ParamsType.ts";
+import { renderInContext } from "./renderInContext.ts";
 
 
-export class HtmlValue extends ContextedValue {
+export class HtmlContextValue extends ContextValue {
 
     static readonly #regex = /[&<>"']/g;
 
@@ -20,8 +21,8 @@ export class HtmlValue extends ContextedValue {
 
 
     static escape(value: unknown): string {
-        const regex = HtmlValue.#regex;
-        const replacement = HtmlValue.#replacement;
+        const regex = HtmlContextValue.#regex;
+        const replacement = HtmlContextValue.#replacement;
 
         regex.lastIndex = 0;
         return `${value}`.replace(regex, (match) => {
@@ -35,11 +36,11 @@ export class HtmlValue extends ContextedValue {
 
 
     render(params: ParamsType): string {
-        return HtmlValue.renderInContext(HtmlValue, this.strings, this.keys, params);
+        return renderInContext(HtmlContextValue, this.strings, this.values, params);
     }
 }
 
 
-export const html: ContextedTag = (contents: TemplateStringsArray, ...expressions: unknown[]) => {
-    return new HtmlValue([...contents], [...expressions]);
+export const html: ContextTagType = (contents: TemplateStringsArray, ...expressions: unknown[]) => {
+    return new HtmlContextValue([...contents], [...expressions]);
 }

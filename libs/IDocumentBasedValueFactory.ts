@@ -1,6 +1,6 @@
-import { type ContextedValue } from "./ContextedValue.ts";
+import { type InstanceContextValue } from "./context-values/mod.ts";
 
 
 export interface IDocumentBasedValueFactory {
-    create(source: string): ContextedValue[];
+    create(source: string): InstanceContextValue[];
 }

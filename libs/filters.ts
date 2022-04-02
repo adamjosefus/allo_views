@@ -3,12 +3,15 @@
  */
 
 import { Marked as Markdown } from "https://deno.land/x/markdown@v2.0.0/mod.ts";
-import { RenderingContext } from "./RenderingContext.ts";
-import { type ContextedValueType, ContextedValue } from "./ContextedValue.ts";
-import { JsValue } from "./JsValue.ts";
-import { HtmlValue } from "./HtmlValue.ts";
+import {
+    type StaticContextValue,
+    type InstanceContextValue,
+    JsContextValue,
+    HtmlContextValue,
+} from "./context-values/mod.ts";
 
-export type FilterType<T = unknown> = (ctx: ContextedValueType, content: T) => ContextedValue | string;
+
+export type FilterType<T = unknown> = (ctx: StaticContextValue, content: T) => InstanceContextValue | unknown;
 
 
 export const noescape: FilterType<string> = (ctx, content: string) => {
@@ -17,12 +20,12 @@ export const noescape: FilterType<string> = (ctx, content: string) => {
 
 
 export const json: FilterType<unknown> = (_ctx, content) => {
-    return JsValue.escape(new JsValue(JSON.stringify(content)))
+    return JsContextValue.escape(new JsContextValue(JSON.stringify(content)))
 };
 
 
 export const markdown: FilterType<string> = (_ctx, s) => {
-    return HtmlValue.escape(new JsValue(Markdown.parse(s).content))
+    return HtmlContextValue.escape(new HtmlContextValue(Markdown.parse(s).content))
 }
 
 

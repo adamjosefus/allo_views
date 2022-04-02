@@ -5,10 +5,12 @@
 import { type IDocumentBasedValueFactory } from "./IDocumentBasedValueFactory.ts";
 import { sliceContent } from "./sliceContent.ts";
 
-import { HtmlValue } from "./HtmlValue.ts";
-import { HtmlCommentValue } from "./HtmlCommentValue.ts";
-import { JsValue } from "./JsValue.ts";
-import { JsCommentValue } from "./JsCommentValue.ts";
+import {
+    HtmlContextValue,
+    HtmlCommentContextValue,
+    JsContextValue,
+    JsCommentContextValue,
+} from "./context-values/mod.ts";
 import { ExpressionsParser } from "./ExpressionsParser.ts";
 
 
@@ -25,7 +27,7 @@ export class HtmlDocumentContextedValueFactory implements IDocumentBasedValueFac
     }
 
 
-    create(sourceContent: string): (HtmlValue | HtmlCommentValue | JsValue | JsCommentValue)[] {
+    create(sourceContent: string): (HtmlContextValue | HtmlCommentContextValue | JsContextValue | JsCommentContextValue)[] {
         const sliceIndexes = this.#computeSliceIndexes(sourceContent);
 
         const htmlSnippets = sliceContent(sourceContent, [0, ...sliceIndexes]).map(s => this.#createHtmlValues(s));
@@ -53,7 +55,7 @@ export class HtmlDocumentContextedValueFactory implements IDocumentBasedValueFac
     }
 
 
-    #createHtmlValues(source: string): (HtmlValue | HtmlCommentValue)[] {
+    #createHtmlValues(source: string): (HtmlContextValue | HtmlCommentContextValue)[] {
         // TODO: Detect html comments
 
         return [
@@ -62,24 +64,24 @@ export class HtmlDocumentContextedValueFactory implements IDocumentBasedValueFac
     }
 
 
-    #createHtmlValue(source: string): HtmlValue {
+    #createHtmlValue(source: string): HtmlContextValue {
         const { bases, expressions } = this.#expressionsParser.parse(source);
-        return new HtmlValue(bases, expressions);
+        return new HtmlContextValue(bases, expressions);
     }
 
-    #createJsValue(source: string): HtmlValue {
+    #createJsValue(source: string): JsContextValue {
         const { bases, expressions } = this.#expressionsParser.parse(source);
-        return new JsValue(bases, expressions);
+        return new JsContextValue(bases, expressions);
     }
 
-    #createJsCommentValue(source: string): HtmlValue {
+    #createJsCommentValue(source: string): JsCommentContextValue {
         const { bases, expressions } = this.#expressionsParser.parse(source);
-        return new JsCommentValue(bases, expressions);
+        return new JsCommentContextValue(bases, expressions);
     }
 
 
 
-    #createJsValues(source: string): (JsValue | JsCommentValue)[] {
+    #createJsValues(source: string): (JsContextValue | JsCommentContextValue)[] {
         type SnippetType = {
             content: string,
             isComment: boolean,

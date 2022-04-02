@@ -3,8 +3,6 @@ import { Cache } from "https://deno.land/x/allo_caching@v1.2.0/mod.ts";
 import { RenderingContext } from "./RenderingContext.ts";
 import { type ContextedValueFactory } from "./ContextedValueFactory.ts";
 import { ParamsType } from "./ParamsType.ts";
-import { ExpressionsParser } from "./ExpressionsParser.ts";
-import { renderFragmentContent } from "./renderFragmentContent.ts";
 
 
 /**
@@ -23,7 +21,6 @@ export class Template {
 
     readonly #path: string;
     readonly #contextedValueFactory: ContextedValueFactory;
-    // readonly #expressionsParser: ExpressionsParser;
 
     readonly renderCallbackCache = new Cache<RenderCallback>()
 
@@ -54,16 +51,6 @@ export class Template {
                 acc.push(snippet.render(params));
                 return acc;
             }, []).join('');
-
-
-            // const result = snippets.reduce((acc: string[], fragment) => {
-            //     const [bases, expressions] = this.#expressionsParser.parse(fragment.sourceContent);
-
-            //     acc.push(renderFragmentContent(fragment.renderingContext, bases, expressions, params));
-            //     return acc;
-            // }, []).join('');
-
-            // return result;
         }
     }
 }
