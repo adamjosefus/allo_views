@@ -1,17 +1,10 @@
-import { type ParamsType } from "./ParamsType.ts";
+import { type ExpressionRenderCallback } from "./ExpressionRenderCallback.ts";
+import { type ParamsType } from "../ParamsType.ts";
 
 
 /**
  * @internal
  */
-export type ExpressionType = {
-    serialize: (params: ParamsType) => unknown;
-}
-
-
-export type ExpressionRenderCallback = (params: ParamsType) => unknown;
-
-
 export class Expression {
 
     readonly #callback: ExpressionRenderCallback;

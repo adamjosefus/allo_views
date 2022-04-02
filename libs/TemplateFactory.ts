@@ -4,9 +4,8 @@ import { ExpressionsParser } from "./ExpressionsParser.ts";
 
 
 export class TemplateFactory {
-// #expressionsParser: ExpressionsParser;
-#contextedValueFactory: ContextedValueFactory;
 
+    #contextedValueFactory: ContextedValueFactory;
 
 
     constructor() {

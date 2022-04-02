@@ -1,4 +1,4 @@
-import { Expression } from "../ExpressionType.ts";
+import { Expression } from "../expressions/Expression.ts";
 import { type ParamsType } from "../ParamsType.ts";
 import { type ContextValue } from "./ContextValue.ts";
 

@@ -3,7 +3,7 @@
  */
 
 import { HtmlDocumentContextedValueFactory } from "./HtmlDocumentContextedValueFactory.ts";
-import { type ContextFragmentType } from "./ContextFragmentType.ts";
+
 import { IDocumentBasedValueFactory } from "./IDocumentBasedValueFactory.ts";
 import { ExpressionsParser } from "./ExpressionsParser.ts";
 import { ContextValue } from "./context-values/ContextValue.ts";

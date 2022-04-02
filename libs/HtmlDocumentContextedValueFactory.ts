@@ -3,8 +3,7 @@
  */
 
 import { type IDocumentBasedValueFactory } from "./IDocumentBasedValueFactory.ts";
-import { sliceContent } from "./sliceContent.ts";
-
+import { sliceString } from "./sliceString.ts";
 import {
     HtmlContextValue,
     HtmlCommentContextValue,
@@ -30,8 +29,8 @@ export class HtmlDocumentContextedValueFactory implements IDocumentBasedValueFac
     create(sourceContent: string): (HtmlContextValue | HtmlCommentContextValue | JsContextValue | JsCommentContextValue)[] {
         const sliceIndexes = this.#computeSliceIndexes(sourceContent);
 
-        const htmlSnippets = sliceContent(sourceContent, [0, ...sliceIndexes]).map(s => this.#createHtmlValues(s));
-        const jsSnippets = sliceContent(sourceContent, [...sliceIndexes]).map(s => this.#createJsValues(s));
+        const htmlSnippets = sliceString(sourceContent, [0, ...sliceIndexes]).map(s => this.#createHtmlValues(s));
+        const jsSnippets = sliceString(sourceContent, [...sliceIndexes]).map(s => this.#createJsValues(s));
 
         // Get max length of arrays
         const length = Math.max(htmlSnippets.length, jsSnippets.length);
