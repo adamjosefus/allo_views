@@ -3,6 +3,7 @@
  */
 
 import { ContextedValue, type ContextedTag } from "./ContextedValue.ts";
+import { ParamsType } from "./ParamsType.ts";
 
 
 export class JsValue extends ContextedValue {
@@ -12,8 +13,8 @@ export class JsValue extends ContextedValue {
     }
 
 
-    render(): string {
-        return JsValue.renderInContext(JsValue, this.strings, this.keys);
+    render(params: ParamsType): string {
+        return JsValue.renderInContext(JsValue, this.strings, this.keys, params);
     }
 }
 

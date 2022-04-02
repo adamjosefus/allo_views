@@ -3,6 +3,7 @@
  */
 
 import { ContextedValue, type ContextedTag } from "./ContextedValue.ts";
+import { ParamsType } from "./ParamsType.ts";
 
 
 export class HtmlCommentValue extends ContextedValue {
@@ -24,8 +25,8 @@ export class HtmlCommentValue extends ContextedValue {
     }
 
 
-    render(): string {
-        return HtmlCommentValue.renderInContext(HtmlCommentValue, this.strings, this.keys);
+    render(params: ParamsType): string {
+        return HtmlCommentValue.renderInContext(HtmlCommentValue, this.strings, this.keys, params);
     }
 }
 

@@ -1,7 +1,10 @@
-import { type ExpressionType } from "./ExpressionType.ts";
+// TODO: Delete this file
 
 
-/**
- * @internal
- */
-export type FragmentContentArrayType = [bases: string[], expressions: ExpressionType[]];
+// import { type ExpressionType } from "./ExpressionType.ts";
+
+
+// /**
+//  * @internal
+//  */
+// export type FragmentContentArrayType = [bases: string[], expressions: ExpressionType[]];

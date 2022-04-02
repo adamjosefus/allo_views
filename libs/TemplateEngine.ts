@@ -33,9 +33,9 @@ export class TemplateEngine {
     constructor() {
         this.#templateFactory = new TemplateFactory()
 
-        this.#addNormalizedFilter('noescape', Filters.noescape);
-        this.#addNormalizedFilter('json', Filters.json);
-        this.#addNormalizedFilter('markdown', Filters.markdown);
+        // this.#addNormalizedFilter('noescape', Filters.noescape);
+        // this.#addNormalizedFilter('json', Filters.json);
+        // this.#addNormalizedFilter('markdown', Filters.markdown);
 
         this.addFilter('trim', Filters.trim);
         this.addFilter('lower', Filters.lower);

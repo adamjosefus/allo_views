@@ -1,0 +1,34 @@
+/**
+ * @copyright Copyright (c) 2022 Adam Josefus
+ */
+
+import { HtmlDocumentContextedValueFactory } from "./HtmlDocumentContextedValueFactory.ts";
+import { type ContextFragmentType } from "./ContextFragmentType.ts";
+import { IDocumentBasedValueFactory } from "./IDocumentBasedValueFactory.ts";
+import { type ContextedValue } from "./ContextedValue.ts";
+import { ExpressionsParser } from "./ExpressionsParser.ts";
+
+
+/**
+ * @internal
+ */
+export class ContextedValueFactory implements IDocumentBasedValueFactory {
+
+    #htmlBasedFactory: HtmlDocumentContextedValueFactory;
+
+    constructor(expressionsParser: ExpressionsParser) {
+        this.#htmlBasedFactory = new HtmlDocumentContextedValueFactory(expressionsParser);
+    }
+
+
+    create(source: string): ContextedValue[] {
+        // TODO: Detect main type of fragment (html, js, json, xml, plaintext, ...)
+        return this.#createFromHtmlDocument(source);
+    }
+
+
+    #createFromHtmlDocument(source: string): ContextedValue[] {
+        return this.#htmlBasedFactory.create(source);
+    }
+}
+

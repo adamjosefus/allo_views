@@ -1,10 +1,9 @@
-import { type ExpressionType } from "./ExpressionType.ts";
-import { type FragmentContentArrayType } from "./FragmentContentArrayType.ts";
+// import { type ExpressionType } from "./ExpressionType.ts";
+import { Expression, type ExpressionRenderCallback } from "./ExpressionType.ts";
+// import { type FragmentContentArrayType } from "./FragmentContentArrayType.ts";
 import { type ParamsType } from "./ParamsType.ts";
 import { generateJavascriptVariablesCode } from "./helpers/generateJavascriptVariablesCode.ts";
 
-
-type SerializeCallback = (params: ParamsType) => unknown;
 
 
 /**
@@ -16,12 +15,12 @@ export class ExpressionsParser {
     }
 
 
-    parse(source: string): FragmentContentArrayType {
+    parse(source: string) {
         const regex = ExpressionsParser.#regex.expressionParser;
         regex.lastIndex = 0;
 
         const bases: string[] = [];
-        const expressions: ExpressionType[] = [];
+        const expressions: Expression[] = [];
 
         const previous = {
             start: 0,
@@ -36,7 +35,7 @@ export class ExpressionsParser {
             const { name, stringQuote, inline, callable, callableArgs, _filters } = match.groups ?? {} as Record<string, string | null | undefined>;
 
             // Set tag
-            const serializeCallback = ((): SerializeCallback => {
+            const renderCallback = ((): ExpressionRenderCallback => {
                 // Inline force string value
                 if (inline && stringQuote) return ExpressionsParser.#createStringSerializeCallback(inline, stringQuote);
 
@@ -52,16 +51,18 @@ export class ExpressionsParser {
                 throw new Error("Unknown tag type");
             })();
 
-            expressions.push({
-                serialize: (params: ParamsType) => {
-                    try {
-                        return serializeCallback(params);
-                    } catch (err) {
-                        console.log("Expression serialize error:", err);
-                        return null;
-                    }
+            const renderSafeCallback = (params: ParamsType) => {
+                try {
+                    return renderCallback(params);
+                } catch (err) {
+                    console.log("Expression serialize error:", err);
+                    return null;
                 }
-            });
+            }
+
+            const expression = new Expression(renderSafeCallback);
+
+            expressions.push(expression);
 
             // Set base
             const base = source.substring(previous.end, start);
@@ -75,19 +76,22 @@ export class ExpressionsParser {
 
         bases.push(source.substring(previous.end));
 
-        return [bases, expressions];
+        return {
+            bases,
+            expressions
+        };
     }
 
 
 
-    static #createStringSerializeCallback = (rawString: string, quoteMark: string): SerializeCallback => {
+    static #createStringSerializeCallback = (rawString: string, quoteMark: string): ExpressionRenderCallback => {
         return _params => {
             return eval.apply(null, [`${quoteMark}${rawString}${quoteMark}`]);
         }
     }
 
 
-    static #createExpressionSerializeCallback = (expression: string): SerializeCallback => {
+    static #createExpressionSerializeCallback = (expression: string): ExpressionRenderCallback => {
         return params => {
             const script = `(() => {
             ${generateJavascriptVariablesCode(params)}
@@ -99,7 +103,7 @@ export class ExpressionsParser {
     }
 
 
-    static #createVariableSerializeCallback = (paramName: string): SerializeCallback => {
+    static #createVariableSerializeCallback = (paramName: string): ExpressionRenderCallback => {
         return params => {
             const paramStore = new Map(Object.entries(params));
             if (!paramStore.has(paramName)) throw new Error(`Missing parameter: ${paramName}`);
@@ -109,7 +113,7 @@ export class ExpressionsParser {
     }
 
 
-    static #createFunctionSerializeCallback = (paramName: string, rawArgs: string | null): SerializeCallback => {
+    static #createFunctionSerializeCallback = (paramName: string, rawArgs: string | null): ExpressionRenderCallback => {
         return params => {
             const paramStore = new Map(Object.entries(params));
             if (!paramStore.has(paramName)) throw new Error(`Missing parameter: ${paramName}`);

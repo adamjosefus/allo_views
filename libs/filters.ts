@@ -4,25 +4,25 @@
 
 import { Marked as Markdown } from "https://deno.land/x/markdown@v2.0.0/mod.ts";
 import { RenderingContext } from "./RenderingContext.ts";
-import { createContextContent } from "./createContextContent.ts";
-import { type ContextContent } from "./ContextContent.ts";
+import { type ContextedValueType, ContextedValue } from "./ContextedValue.ts";
+import { JsValue } from "./JsValue.ts";
+import { HtmlValue } from "./HtmlValue.ts";
 
-
-export type FilterType<T = unknown> = (ctx: RenderingContext, content: T) => ContextContent | string;
+export type FilterType<T = unknown> = (ctx: ContextedValueType, content: T) => ContextedValue | string;
 
 
 export const noescape: FilterType<string> = (ctx, content: string) => {
-    return createContextContent(ctx, content);
+    return ctx.escape(new ctx(content));
 };
 
 
 export const json: FilterType<unknown> = (_ctx, content) => {
-    return createContextContent(RenderingContext.JsContent, JSON.stringify(content));
+    return JsValue.escape(new JsValue(JSON.stringify(content)))
 };
 
 
 export const markdown: FilterType<string> = (_ctx, s) => {
-    return createContextContent(RenderingContext.HtmlContent, Markdown.parse(s).content);
+    return HtmlValue.escape(new JsValue(Markdown.parse(s).content))
 }
 
 
