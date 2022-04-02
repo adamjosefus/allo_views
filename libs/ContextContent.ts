@@ -2,23 +2,42 @@
  * @copyright Copyright (c) 2022 Adam Josefus
  */
 
+import { RenderingContext } from "./RenderingContext.ts";
+
 export abstract class ContextContent {
-    protected parts: string[];
-    protected values: unknown[];
+    protected strings: readonly string[];
+    protected keys: readonly unknown[];
 
-
-    // deno-lint-ignore no-explicit-any
-    constructor(parts: string[] | string, values: any[] = []) {
-        this.parts = typeof parts == 'string' ? [parts] : parts;
-        this.values = values;
+    constructor(strings: string[] | string, keys: unknown[] = []) {
+        this.strings = [strings].flat();
+        this.keys = keys;
     }
 
 
-    // deno-lint-ignore no-explicit-any
-    abstract escape(s: any): string;
+    static escape(content: unknown): string {
+        throw new Error("Not implemented");
+    }
 
 
-    abstract toString(): string;
+    abstract render(): string;
+
+
+    static renderInContext(ContextClass: typeof ContextContent, strings: readonly string[], keys: readonly unknown[]): string {
+        return strings.reduce((acc: string[], s, i) => {
+            acc.push(s);
+
+            const key = keys.at(i);
+            if (key !== undefined) {
+                if (key instanceof ContextClass) {
+                    acc.push(key.render());
+                } else {
+                    acc.push(ContextClass.escape(key));
+                }
+            }
+
+            return acc;
+        }, []).join('');
+    }
 }
 
 
