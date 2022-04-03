@@ -1,9 +1,13 @@
 import { Expression } from "../expressions/Expression.ts";
 import { type ParamsType } from "../ParamsType.ts";
-import { type ContextValue } from "./ContextValue.ts";
+import { type StaticContextValue } from "./CommonContextValue.ts";
+import { ContextValue } from "./ContextValue.ts";
 
 
-export function renderInContext(ContextClass: typeof ContextValue, strings: readonly string[], keys: readonly unknown[], params: ParamsType): string {
+/**
+ * @internal
+ */
+export function renderInContext(ContextClass: StaticContextValue, strings: readonly string[], keys: readonly unknown[], params: ParamsType): string {
     return strings.reduce((acc: string[], s, i) => {
         acc.push(s);
 
@@ -16,6 +20,8 @@ export function renderInContext(ContextClass: typeof ContextValue, strings: read
 
             if (value instanceof ContextClass) {
                 acc.push(value.render(params));
+            } else if (value instanceof ContextValue) {
+                acc.push(ContextClass.escape(value.render(params)));
             } else {
                 acc.push(ContextClass.escape(value));
             }

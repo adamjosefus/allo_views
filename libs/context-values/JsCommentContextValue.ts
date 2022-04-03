@@ -12,8 +12,8 @@ import { renderInContext } from "./renderInContext.ts";
 export class JsCommentContextValue extends ContextValue {
 
     static readonly #replacement = new Map<string, string>([
-        ['*/', '﹡/'],
-        ['/*', '/﹡'],
+        ['*/', '*\\/'],
+        ['/*', '/\\*'],
     ]);
 
 
