@@ -1,6 +1,6 @@
 import { Template } from "./Template.ts";
-import { ContextedValueFactory } from "./ContextedValueFactory.ts";
-import { ExpressionsParser } from "./ExpressionsParser.ts";
+import { ContextedValueFactory } from "./context-values/ContextedValueFactory.ts";
+import { ExpressionsParser } from "./expressions/ExpressionsParser.ts";
 
 
 export class TemplateFactory {

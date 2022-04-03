@@ -5,15 +5,15 @@
 import {
     SnippetFactory as HtmlDocumentBased_SnippetFactory,
     ContextType as HtmlDocumentBased_ContextType,
-} from "./HtmlDocumentBased_SnippetFactory.ts";
-import { ExpressionsParser } from "./ExpressionsParser.ts";
+} from "../snippets/HtmlDocumentBased_SnippetFactory.ts";
+import { ExpressionsParser } from "../expressions/ExpressionsParser.ts";
 import {
     InstanceContextValue as ContextValue,
     HtmlContextValue,
     HtmlCommentContextValue,
     JsContextValue,
     JsCommentContextValue,
-} from "./context-values/mod.ts";
+} from "../context-values/mod.ts";
 
 
 export type SnippetType<Context extends string> = {

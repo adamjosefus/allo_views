@@ -1,6 +1,6 @@
-import { Expression, type ExpressionRenderCallback } from "./expressions/mod.ts";
-import { type ParamsType } from "./ParamsType.ts";
-import { generateJavascriptVariablesCode } from "./helpers/generateJavascriptVariablesCode.ts";
+import { generateJavascriptVariablesCode } from "../helpers/generateJavascriptVariablesCode.ts";
+import { type ParamsType } from "../ParamsType.ts";
+import { Expression, type ExpressionRenderCallback } from "./mod.ts";
 
 
 /**

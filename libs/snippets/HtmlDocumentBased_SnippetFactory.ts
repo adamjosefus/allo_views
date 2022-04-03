@@ -3,7 +3,7 @@
  */
 
 import { type ISnippetFactory } from "./ISnippetFactory.ts";
-import { sliceString } from "./helpers/sliceString.ts";
+import { sliceString } from "../helpers/sliceString.ts";
 
 
 export const enum ContextType {
