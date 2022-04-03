@@ -2,22 +2,43 @@
  * @copyright Copyright (c) 2022 Adam Josefus
  */
 
-import { HtmlDocumentContextedValueFactory } from "./HtmlDocumentContextedValueFactory.ts";
-
-import { IDocumentBasedValueFactory } from "./IDocumentBasedValueFactory.ts";
+import {
+    SnippetFactory as HtmlDocumentBased_SnippetFactory,
+    ContextType as HtmlDocumentBased_ContextType,
+} from "./HtmlDocumentBased_SnippetFactory.ts";
 import { ExpressionsParser } from "./ExpressionsParser.ts";
-import { ContextValue } from "./context-values/ContextValue.ts";
+import {
+    InstanceContextValue as ContextValue,
+    HtmlContextValue,
+    HtmlCommentContextValue,
+    JsContextValue,
+    JsCommentContextValue,
+} from "./context-values/mod.ts";
+
+
+export type SnippetType<Context extends string> = {
+    context: Context;
+    source: string;
+}
 
 
 /**
  * @internal
  */
-export class ContextedValueFactory implements IDocumentBasedValueFactory {
+export class ContextedValueFactory {
 
-    #htmlBasedFactory: HtmlDocumentContextedValueFactory;
+    #expressionsParser: ExpressionsParser;
+    #snippetFactories: Readonly<{
+        htmlDocumentBased: HtmlDocumentBased_SnippetFactory;
+    }>;
+
+
 
     constructor(expressionsParser: ExpressionsParser) {
-        this.#htmlBasedFactory = new HtmlDocumentContextedValueFactory(expressionsParser);
+        this.#expressionsParser = expressionsParser;
+        this.#snippetFactories = {
+            htmlDocumentBased: new HtmlDocumentBased_SnippetFactory(),
+        }
     }
 
 
@@ -28,7 +49,22 @@ export class ContextedValueFactory implements IDocumentBasedValueFactory {
 
 
     #createFromHtmlDocument(source: string): ContextValue[] {
-        return this.#htmlBasedFactory.create(source);
+        const factory = this.#snippetFactories.htmlDocumentBased;
+        const snippets = factory.create(source);
+
+        return snippets.map(sn => {
+            const { strings, expressions } = this.#expressionsParser.parse(sn.source);
+
+            switch (sn.context) {
+                case HtmlDocumentBased_ContextType.Html: return new HtmlContextValue(strings, expressions);
+                case HtmlDocumentBased_ContextType.HtmlComment: return new HtmlCommentContextValue(strings, expressions);
+                case HtmlDocumentBased_ContextType.Js: return new JsContextValue(strings, expressions);
+                case HtmlDocumentBased_ContextType.JsComment: return new JsCommentContextValue(strings, expressions);
+                
+                default:
+                    throw new Error("Unsupported context");
+            }
+        });
     }
 }
 

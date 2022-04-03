@@ -16,7 +16,7 @@ export class ExpressionsParser {
         const regex = ExpressionsParser.#regex.expressionParser;
         regex.lastIndex = 0;
 
-        const bases: string[] = [];
+        const strings: string[] = [];
         const expressions: Expression[] = [];
 
         const previous = {
@@ -63,7 +63,7 @@ export class ExpressionsParser {
 
             // Set base
             const base = source.substring(previous.end, start);
-            bases.push(base);
+            strings.push(base);
 
             // Update to next iteration
             previous.start = start;
@@ -71,10 +71,10 @@ export class ExpressionsParser {
 
         }
 
-        bases.push(source.substring(previous.end));
+        strings.push(source.substring(previous.end));
 
         return {
-            bases,
+            strings,
             expressions
         };
     }
