@@ -14,7 +14,7 @@ export function renderInContext(ContextClass: StaticContextValue, strings: reado
         const key = keys.at(i);
         if (key !== undefined) {
             const value = ((v) => {
-                if (v instanceof Expression) return v.render(params);
+                if (v instanceof Expression) return v.render(ContextClass, params, new Map());
                 return v;
             })(key);
 

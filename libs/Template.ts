@@ -1,4 +1,4 @@
-import { join, isAbsolute } from "https://deno.land/std@0.132.0/path/mod.ts";
+import { join, isAbsolute } from "https://deno.land/std@0.135.0/path/mod.ts";
 import { Cache } from "https://deno.land/x/allo_caching@v1.2.0/mod.ts";
 import { type ContextedValueFactory } from "./context-values/ContextedValueFactory.ts";
 import { ParamsType } from "./ParamsType.ts";
@@ -40,7 +40,7 @@ export class Template {
 
 
     #createRenderCallback(): (params: ParamsType) => string {
-        const source = Deno.readTextFileSync(this.#path)
+        const source = Deno.readTextFileSync(this.#path);
 
         return (params: ParamsType) => {
             const snippets = this.#contextedValueFactory.create(source);

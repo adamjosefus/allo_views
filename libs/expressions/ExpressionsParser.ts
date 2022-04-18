@@ -29,7 +29,7 @@ export class ExpressionsParser {
             const start = match.index!;
             const end = regex.lastIndex!;
 
-            const { name, stringQuote, inline, callable, callableArgs, _filters } = match.groups ?? {} as Record<string, string | null | undefined>;
+            const { name, stringQuote, inline, callable, callableArgs, filters } = match.groups ?? {} as Record<string, string | null | undefined>;
 
             // Set tag
             const renderCallback = ((): ExpressionRenderCallback => {
@@ -59,6 +59,14 @@ export class ExpressionsParser {
 
             const expression = new Expression(renderSafeCallback);
 
+            if (filters) {
+                const arr = ExpressionsParser.#parseFilterString(filters);
+
+                arr.forEach(({ name, getArguments }) => {
+                    expression.assignFilter(name, getArguments);
+                });
+            }
+
             expressions.push(expression);
 
             // Set base
@@ -80,7 +88,6 @@ export class ExpressionsParser {
     }
 
 
-
     static #createStringSerializeCallback = (rawString: string, quoteMark: string): ExpressionRenderCallback => {
         return _params => {
             return eval.apply(null, [`${quoteMark}${rawString}${quoteMark}`]);
@@ -90,12 +97,7 @@ export class ExpressionsParser {
 
     static #createExpressionSerializeCallback = (expression: string): ExpressionRenderCallback => {
         return params => {
-            const script = `(() => {
-            ${generateJavascriptVariablesCode(params)}
-            return ${expression};
-        })();`;
-
-            return eval.apply(null, [script]);
+            return ExpressionsParser.#parseRawArgs(expression, params);
         }
     }
 
@@ -120,15 +122,49 @@ export class ExpressionsParser {
             if (rawArgs === null) {
                 return fce();
             } else {
-                const script = `(() => {
-                    ${generateJavascriptVariablesCode(params)}
-                    return [${rawArgs}];
-                })();`;
+                const args = ExpressionsParser.#parseRawArgs(rawArgs, params);
 
-                const args = eval.apply(null, [script]) as unknown[];
                 return fce(...args);
             }
         }
     }
 
+
+    static #parseFilterString(s: string) {
+        const filters = s.split("|")
+            .map(part => part.trim())
+            .filter(part => part.length > 0)
+            .map(part => {
+                const splitIndex = part.indexOf(":");
+
+                if (splitIndex === -1) {
+                    return { name: part, rawArgs: null };
+                }
+
+                const name = part.substring(0, splitIndex);
+                const rawArgs = part.substring(splitIndex + 1);
+
+                return { name, rawArgs };
+            })
+            .map(({ name, rawArgs }) => {
+                const getArguments = (params: ParamsType) => {
+                    if (rawArgs === null) return [];
+                    return ExpressionsParser.#parseRawArgs(rawArgs, params);
+                }
+
+                return { name, getArguments };
+            });
+
+        return filters;
+    }
+
+
+    static #parseRawArgs(raw: string, params: ParamsType): unknown[] {
+        const script = `(() => {
+            ${generateJavascriptVariablesCode(params)}
+            return [${raw}];
+        })();`;
+
+        return eval.apply(null, [script]) as unknown[];
+    }
 }

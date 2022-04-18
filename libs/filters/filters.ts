@@ -4,18 +4,15 @@
 
 import { Marked as Markdown } from "https://deno.land/x/markdown@v2.0.0/mod.ts";
 import {
-    type StaticContextValue,
-    type InstanceContextValue,
     JsContextValue,
     HtmlContextValue,
-} from "./context-values/mod.ts";
-
-
-export type FilterType<T = unknown> = (ctx: StaticContextValue, content: T) => InstanceContextValue | unknown;
+} from "../context-values/mod.ts";
+import { FilterType } from "./FilterType.ts";
 
 
 export const noescape: FilterType<string> = (ctx, content: string) => {
-    return ctx.escape(new ctx(content));
+    return new ctx(content);
+    // return ctx.escape(new ctx(content));
 };
 
 
