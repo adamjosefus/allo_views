@@ -1,2 +1,2 @@
-export * from "./libs/TemplateEngine.ts"
-export { html, js } from "./libs/context-values/mod.ts";
+export * from "./model/TemplateEngine.ts"
+export { html, js } from "./model/context-values/mod.ts";

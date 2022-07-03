@@ -1,5 +1,5 @@
-import { join, isAbsolute } from "https://deno.land/std@0.135.0/path/mod.ts";
-import { Cache } from "https://deno.land/x/allo_caching@v1.2.0/mod.ts";
+import { join, isAbsolute } from "../libs/path.ts";
+import { Cache } from "../libs/allo_caching.ts";
 import { type ContextedValueFactory } from "./context-values/ContextedValueFactory.ts";
 import { ParamsType } from "./ParamsType.ts";
 

@@ -4,7 +4,7 @@
 
 import { TemplateFactory } from "./TemplateFactory.ts";
 import { type Template } from "./Template.ts";
-import { Cache } from "https://deno.land/x/allo_caching@v1.2.0/mod.ts";
+import { Cache } from "../libs/allo_caching.ts";
 
 
 export class TemplateEngine {
