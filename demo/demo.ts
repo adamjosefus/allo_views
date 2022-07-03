@@ -1,6 +1,6 @@
-import { dirname, fromFileUrl, join } from "https://deno.land/std@0.135.0/path/mod.ts";
-import { RouterList } from "https://deno.land/x/allo_routing@v1.1.4/mod.ts";
-import { Server } from "https://deno.land/x/allo_server@v1.0.1/mod.ts";
+import { dirname, fromFileUrl, join } from "../libs/path.ts";
+import { RouterList } from "../libs/allo_routing.ts";
+import { Server } from "../libs/allo_server.ts";
 import { html, js, TemplateEngine } from "../mod.ts";
 
 const __dirname = dirname(fromFileUrl(import.meta.url));
